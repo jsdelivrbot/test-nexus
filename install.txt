@@ -1,0 +1,7 @@
+- install node.js
+
+- run: npm install
+
+- run: node node_app.js
+
+( use sudo in lnx )
