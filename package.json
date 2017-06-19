@@ -1,4 +1,10 @@
 {
+"name": "nexus-test",
+"version": "0.1",
+"description": "A sample Node.js app using Express 4",
+"engines": {
+    "node": "latest"
+ },
 "dependencies": {
 	"ejs": "latest",
     "body-parser": "latest",
@@ -11,5 +17,19 @@
     "grunt-file-append": "latest",
     "jshint-stylish": "latest"
   },
-  "author": "Eletskiy Konstantin"
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "main": "node_app.js",
+  "scripts": {
+    "start": "node node_app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keletskiy/test-nexus"
+  },
+  "author": "Eletskiy Konstantin",
+  "license": "MIT"
 }
