@@ -6,16 +6,9 @@
     "node": "latest"
  },
 "dependencies": {
-	"ejs": "latest",
+    "ejs": "latest",
     "body-parser": "latest",
     "express": "latest",
-	"grunt": "latest",
-    "grunt-contrib-concat": "latest",
-    "grunt-contrib-copy": "latest",
-    "grunt-contrib-jshint": "latest",
-    "grunt-contrib-uglify": "latest",
-    "grunt-file-append": "latest",
-    "jshint-stylish": "latest"
   },
   "keywords": [
     "node",
