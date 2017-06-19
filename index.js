@@ -31,7 +31,6 @@ app.get('/models/:model_id', function(req, res) {
 
 // Start server 
 
-var server = app.listen(port, function () {
-    console.log('Server running at http://127.0.0.1:' + port + '/nexus');
-    console.log('Server running at http://127.0.0.1:' + port + '/corto');
+app.listen(app.get('port'), function() {
+  console.log('Node app is running on port', app.get('port'));
 });
