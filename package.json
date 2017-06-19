@@ -1,28 +1,26 @@
 {
-    "name": "nexus-test",
-    "version": "0.1",
-    "description": "A sample Node.js app using Express 4",
-    "engines": {
-        "node": "6.10.2"
-     },
-    "dependencies": {
-        "ejs": "2.5.6",
-        "express":"*",
-        "body-parser":"*"
-    },
-    "keywords": [
-        "node",
-        "heroku",
-        "express"
-    ],
-    "main": "node_app.js",
-    "scripts": {
-        "start": "node node_app.js"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/keletskiy/test-nexus"
-    },
-    "author": "Eletskiy Konstantin",
-    "license": "MIT"
+  "name": "node-js-nexus",
+  "version": "0.1",
+  "description": "Node.js app",
+  "engines": {
+    "node": "6.10.2"
+  },
+  "main": "node_app.js",
+  "scripts": {
+    "start": "node node_app.js"
+  },
+  "dependencies": {
+    "ejs": "2.5.6",
+    "express": "4.15.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keletskiy/test-nexus"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT"
 }
