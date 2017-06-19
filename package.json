@@ -8,7 +8,7 @@
     "dependencies": {
         "ejs": "latest",
         "body-parser": "latest",
-        "express": "latest",
+        "express": "latest"
     },
     "keywords": [
         "node",
