@@ -1,10 +1,8 @@
 //
 //
 
-
 var fs = require("fs");
 var express = require("express");
-//var bodyParser = require("body-parser");
 
 var app = express();
 
@@ -13,7 +11,6 @@ app.set('port', (process.env.PORT || 5000));
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
-//app.use(bodyParser.urlencoded({extended:false}));
 app.use(express.static('public'));
 
 app.get('/nexus', function(req, res) {
