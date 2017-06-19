@@ -15,6 +15,11 @@
     "express": "*",
     "body-parser": "*"
   },
+  "devDependencies": {
+    "ejs": "*",
+    "express": "*",
+    "body-parser": "*"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/keletskiy/test-nexus"
