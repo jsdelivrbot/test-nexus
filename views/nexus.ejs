@@ -73,6 +73,7 @@
         controls.update();
         render();
     }
+    window.addEventListener( 'resize', onWindowResize, false );
 
     function animate() {
         requestAnimationFrame( animate );
