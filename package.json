@@ -3,7 +3,8 @@
   "version": "0.1",
   "description": "Node.js app",
   "engines": {
-    "node": "*"
+    "node": "*",
+    "npm": "*"
   },
   "main": "node_app.js",
   "scripts": {
