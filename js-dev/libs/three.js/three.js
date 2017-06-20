@@ -37277,7 +37277,7 @@
 
 					if ( targetObject[ objectIndex ] === undefined ) {
 
-						console.error( "  trying to bind to objectIndex of objectName, but is undefined:", this, targetObject );
+						// console.error( "  trying to bind to objectIndex of objectName, but is undefined:", this, targetObject );
 						return;
 
 					}

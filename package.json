@@ -7,16 +7,25 @@
   },
   "main": "index.js",
   "scripts": {
+    "postinstall": "grunt",
     "start": "node index.js"
   },
   "dependencies": {
     "ejs": "*",
-    "express": "*"
+    "express": "*",
+    "grunt": "*",
+    "grunt-contrib-concat": "*",
+    "grunt-contrib-copy": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-file-append": "*",
+    "jshint-stylish": "*"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/keletskiy/test-nexus"
   },
   "keywords": [ "node", "heroku", "express"],
-  "license": "MIT"
+  "license": "MIT",
+  "author":"Eletskiy Konstantin"
 }

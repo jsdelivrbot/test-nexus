@@ -11,12 +11,17 @@ app.set('views', __dirname + '/views');
 
 app.use(express.static('public'));
 
+app.get('/', function(req, res) {
+    res.render('nexus', {});
+});
+
 app.get('/nexus', function(req, res) {
     res.render('nexus', {});
 });
-app.get('/corto', function(req, res) {
-    res.render('corto', {});
-});
+
+//app.get('/corto', function(req, res) {
+//    res.render('corto', {});
+//});
 
 app.get('/page/:model_id', function(req, res) {
     var arr = fs.readdirSync("public/models/" + req.params.model_id);
