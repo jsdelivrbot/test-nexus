@@ -95,7 +95,8 @@ module.exports = function (grunt) {
                     addPropertyWithEvent : true,
                     THREE : true,
                     Stats : true,
-                    OCC : true // online character customisation
+                    Nexus : true,
+                    NexusObject : true
                 },
                 reporter: require('jshint-stylish')
             },

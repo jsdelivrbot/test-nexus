@@ -5,8 +5,6 @@
 (function main(){
     "use strict";
 
-    /* globals Nexus , NexusObject */
-
     var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 10000 );
     camera.position.set(0, 3, 30);
     camera.lookAt(new THREE.Vector3(0,2,0));
@@ -44,6 +42,7 @@
         controls.noZoom = false;
         controls.noRotate = false;
         controls.noPan = false;
+        controls.addEventListener( 'change', update_nexus_frame );
     }
 
     // Prepare clock
