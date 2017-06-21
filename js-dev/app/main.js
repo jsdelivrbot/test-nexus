@@ -53,8 +53,8 @@
     if (_debug){
         stats = new Stats();
         stats.domElement.style.position = 'absolute';
-        stats.domElement.style.left = '50px';
-        stats.domElement.style.bottom = '50px';
+        stats.domElement.style.left = '20px';
+        stats.domElement.style.bottom = '20px';
         stats.domElement.style.zIndex = 1;
         container.appendChild( stats.domElement );
     }
@@ -98,7 +98,42 @@
         if (controls)
             controls.update(delta);
 
+        var nexus_context = null;
+
+        if (Nexus && Nexus.contexts)
+            Nexus.contexts.forEach(function(g) { 
+                if(g.gl == renderer.context) {
+                    nexus_context = g;
+                }
+            });
+
+        if (nexus_context){
+            nexus_context.rendered = 0;
+        }
+
         renderer.render( scene, camera );
+
+        updateContextInfo(renderer, nexus_context);
+    }
+
+    function updateContextInfo( renderer, nexus_context ) {
+
+        var info = {
+            faces : 0
+        };
+
+        var faces = 0;
+
+        if (renderer)
+            info.faces += Math.round( renderer.info.render.faces );
+
+        if (nexus_context)
+            info.faces += Math.round( nexus_context.rendered / 3 );
+
+        var e = document.createEvent('Event');
+        e.initEvent("ContextInfo.update", true, true);
+        e.info = info;
+        document.dispatchEvent(e);
     }
 
     function update_nexus_frame() {

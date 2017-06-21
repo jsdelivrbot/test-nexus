@@ -15,6 +15,7 @@ module.exports = function (grunt) {
             app: {
                 src: [
                     'js-dev/app/**/*.js',
+                    'js-dev/ui/**/*.js'
                 ],
                 dest: 'public/app/app.js'
             },
