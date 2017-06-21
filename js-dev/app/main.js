@@ -151,11 +151,44 @@
         scene.add(nexus_obj);
     }
 
+    function uploadCrt(path, filename){
+
+        filename = filename + ".crt";
+
+        var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
+
+        var decode_times = [];
+        var blob = null;
+
+        loader.load(filename, function(mesh) {
+            decode_times.push(loader.decode_time);
+            blob = loader.blob;
+
+            //mesh.addEventListener("change", render);
+
+            mesh.geometry.computeBoundingBox();
+            if(!mesh.geometry.attributes.normal) {
+                if(!mesh.geometry.attributes.uv) {
+                    mesh.geometry.computeVertexNormals();
+                }
+                //else 
+                //    ambient.intensity = 1.0;
+            }
+
+            //mesh.geometry.center();
+            //mesh.scale.divideScalar(mesh.geometry.boundingBox.getSize().length());
+            scene.add(mesh); 
+
+            //render();
+            //setTimeout(profile, 10);
+        } );
+    }
+
     animate();
 
     var page = 'HumanBody-FullBody-insane';
 
-    var upload_format = getURLParameter("upload-format") || 'nxs';
+    var upload_format = getURLParameter("format") || 'nxs';
 
     page += "-" + upload_format;
     
@@ -184,7 +217,8 @@
                     }
                     else if (upload_format === "crt"){
 
-                        var _do_nothing = 0;
+                        if (models[i] === "Digestive.Digestive_exterior.Jejunum")
+                            uploadCrt( path, models[i]);
                     }
                 }
             }
