@@ -1,0 +1,12 @@
+# Blender MTL File: 'HumanBody-FullBody-insane.blend'
+# Material Count: 1
+
+newmtl Ligaments
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.297092 0.344998 0.315754
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 0.461752
+illum 1

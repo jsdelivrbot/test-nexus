@@ -1,0 +1,14 @@
+# Blender MTL File: 'HumanBody-FullBody-insane.blend'
+# Material Count: 1
+
+newmtl Intervertebral_discs
+Ns 194.117647
+Ka 1.000000 1.000000 1.000000
+Kd 0.361840 0.379025 0.330117
+Ks 0.334855 0.334855 0.334855
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Bump -bm 0.010000 nearpod-scene-viewer
+map_Kd nearpod-scene-viewer

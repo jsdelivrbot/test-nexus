@@ -23,6 +23,7 @@ module.exports = function (grunt) {
                     'js-dev/libs/three.js/*.js',
                     'js-dev/libs/three.js/plugins/*.js',
                     'js-dev/libs/nexus/*.js',
+                    'js-dev/libs/corto/*.js'
                 ],
                 dest: 'public/libs/libs.js'
             }
@@ -124,5 +125,5 @@ module.exports = function (grunt) {
           }
     });
 
-    grunt.registerTask('default', [ 'concat', 'jshint', 'copy']);
+    grunt.registerTask('default', [ 'concat', 'jshint']);
 };

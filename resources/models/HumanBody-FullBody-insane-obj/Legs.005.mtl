@@ -1,0 +1,38 @@
+# Blender MTL File: 'HumanBody-FullBody-insane.blend'
+# Material Count: 3
+
+newmtl Arms.001
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd Arms-TM.tif
+map_Bump Arms-NM.tif
+
+newmtl Chest.001
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 0.770833
+illum 1
+map_Kd Chest-TM.tif
+map_Bump Chest-NM.tif
+
+newmtl Hands.001
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd Hands-TM.tif
+map_Bump Hands-NM.tif

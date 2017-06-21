@@ -107,32 +107,85 @@
         Nexus.endFrame(renderer.context);
     }
 
+    var onProgress = function ( xhr ) {
+        if ( xhr.lengthComputable ) {
+            var percentComplete = xhr.loaded / xhr.total * 100;
+            console.log( Math.round(percentComplete, 2) + '% downloaded' );
+        }
+    };
+
+    var onError = function ( xhr ) { };
+
+    THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+    var uploadObj = function( path, filename ){
+
+        var mtlLoader = new THREE.MTLLoader();
+
+        mtlLoader.setPath( path );
+
+        mtlLoader.load( filename +'.mtl', function( materials ) {
+
+            materials.preload();
+
+            var objLoader = new THREE.OBJLoader();
+
+            objLoader.setMaterials( materials );
+            objLoader.setPath( path );
+
+            objLoader.load( filename +'.obj', function ( object ) {
+                object.position.set(0.0, 0.0, 0.0);
+                object.scale.set(1.0, 1.0, 1.0);
+                scene.add( object );
+            }, 
+            onProgress,
+            onError );
+
+        });
+    };
+
+    function uploadNxs(path, filename){
+        var nexus_obj = new NexusObject(path + filename + ".nxs", renderer, update_nexus_frame);
+        nexus_obj.position.set(0.0, 0.0, 0.0);
+        nexus_obj.scale.set(1.0, 1.0, 1.0);
+        scene.add(nexus_obj);
+    }
+
     animate();
 
-    var xmlhttp = new XMLHttpRequest();
-
     var page = 'HumanBody-FullBody-insane';
+
+    var upload_format = getURLParameter("upload-format") || 'nxs';
+
+    page += "-" + upload_format;
+    
+    var  xmlhttp = new XMLHttpRequest();
 
     xmlhttp.open("GET", document.location.origin + "/page/" + page, true);
 
     xmlhttp.onreadystatechange=function(){
 
         try{
-
             if (xmlhttp.readyState==4 && xmlhttp.status==200){
 
                 var models = JSON.parse(xmlhttp.responseText);
 
                 for ( var i = 0; i < models.length; i++)//
                 {
-                    var model_link = "models/" + page + "/" + models[i];
+                    var path = "models/" + page + "/";
 
-                    console.log(model_link);
+                    if (upload_format === "nxs") {
 
-                    var obj = new NexusObject(model_link, renderer, update_nexus_frame);
-                    obj.position.set(0.0, 0.0, 0.0);
-                    obj.scale.set(1.0, 1.0, 1.0);
-                    scene.add(obj);
+                        uploadNxs( path, models[i]);
+                    }
+                    else if (upload_format === "obj"){
+
+                        uploadObj( path, models[i]);
+                    }
+                    else if (upload_format === "crt"){
+
+                        var _do_nothing = 0;
+                    }
                 }
             }
         }

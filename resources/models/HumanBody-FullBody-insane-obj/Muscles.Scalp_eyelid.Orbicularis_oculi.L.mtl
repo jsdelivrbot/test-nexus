@@ -1,0 +1,98 @@
+# Blender MTL File: 'HumanBody-FullBody-insane.blend'
+# Material Count: 8
+
+newmtl Ear
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Ear-TM.jpg
+map_Kd Ear-TM.jpg
+
+newmtl Mastication
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Mastication-TM.jpg
+map_Kd Mastication-TM.jpg
+
+newmtl Mouth
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Mouth-TM.jpg
+map_Kd Mouth-TM.jpg
+
+newmtl Neck
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Neck-TM.jpg
+map_Kd Neck-TM.jpg
+
+newmtl Nose
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Nose-TM.jpg
+map_Kd Nose-TM.jpg
+
+newmtl Scalp_eyelid
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Scalp_eyelid-NM.jpg
+map_Kd Scalp_eyelid-TM.jpg
+
+newmtl Thoracic_walls
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Thoracic_walls-TM.jpg
+map_Kd Thoracic_walls-TM.jpg
+
+newmtl Vertebrae
+Ns 570.588235
+Ka 1.000000 1.000000 1.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.133942 0.133942 0.133942
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 0
+map_Bump -bm 0.030000 Vertebrae-TM.jpg
+map_Kd Vertebrae-TM.jpg

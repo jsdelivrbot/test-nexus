@@ -10,21 +10,19 @@ app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 
 app.use(express.static('public'));
+app.use(express.static('resources'));
 
 app.get('/', function(req, res) {
     res.render('nexus', {});
 });
 
-app.get('/nexus', function(req, res) {
-    res.render('nexus', {});
-});
-
-//app.get('/corto', function(req, res) {
-//    res.render('corto', {});
-//});
-
 app.get('/page/:model_id', function(req, res) {
-    var arr = fs.readdirSync("public/models/" + req.params.model_id);
+    console.log(req.params.model_id);
+    var arr = fs.readdirSync("resources/models/" + req.params.model_id);
+    for (var i = 0; i < arr.length; i++){
+        var str = arr[i];
+        arr[i] = str.replace(/\.[^/.]+$/, "");
+    }
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(arr));
 });
@@ -34,5 +32,5 @@ var port = (process.env.PORT || 5000);
 app.set('port', port);
 
 app.listen(app.get('port'), function() {
-  console.log('Server is running - 127.0.0.1:' + port + '/nexus');
+  console.log('Server is running - 127.0.0.1:' + port + '/');
 });
