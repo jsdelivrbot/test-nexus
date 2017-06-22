@@ -42,6 +42,20 @@ function createUI(){
         0
     );
 
+    
+
+    addButtonUI(
+        uiTable,
+        "Change wireframe mode",
+        "ui-gl.draw-wireframe",
+        "Click to change",
+        function(){
+            if (!Nexus.debug_draw_wirefame)
+                Nexus.debug_draw_wirefame = true;
+            else
+                Nexus.debug_draw_wirefame = false;
+        }
+    );
 }
 
 function updateContextInfo(e){
@@ -75,6 +89,26 @@ function addLabelUI( table , description, id, html_data){
     element = document.createElement("span");
     element.setAttribute("id", id);
     element.innerHTML = html_data;
+
+    cell2.appendChild(element);
+
+    return element;
+}
+
+function addButtonUI( table , description, id, btn_text, onClickFunction){
+    "use strict";
+    var i, j, size, row, cell1, cell2, option, element;
+
+    row = table.insertRow(table.rows.length);
+    cell1 = row.insertCell(0);
+    cell2 = row.insertCell(1);
+
+    cell1.innerHTML = description;
+
+    element = document.createElement("button");
+    element.setAttribute("id", id);
+    element.innerText = btn_text;
+    element.onclick = onClickFunction;
 
     cell2.appendChild(element);
 

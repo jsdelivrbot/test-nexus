@@ -360,6 +360,9 @@ Mesh.prototype = {
 		t.frames = new Uint32Array(n);
 		t.errors = new Float32Array(n); //biggest error of instances
 		t.ibo    = new Array(n);
+        // VIDA_CHANGE_BEGIN
+        t.ibo_ls    = new Array(n);
+        // VIDA_CHANGE_END
 		t.vbo    = new Array(n);
 		t.texids = new Array(n);
 
@@ -677,7 +680,6 @@ Instance.prototype = {
 			}
 			if(skip) continue;
 
-
 			var sp = t.mesh.nspheres;
 			var off = n*5;
 			if(!t.isVisible(sp[off], sp[off+1], sp[off+2], sp[off+4])) //tight radius
@@ -750,7 +752,20 @@ Instance.prototype = {
 							last_texture = texid;
 						}
 					}
-					gl.drawElements(gl.TRIANGLES, (end - offset) * 3, gl.UNSIGNED_SHORT, offset * 6);
+
+                    // VIDA_CHANGE_BEGIN
+                    var gl_start_offset = offset * 3;
+                    var gl_draw_count = (end - offset) * 3;
+                    var gl_size_in_bytes = 2;
+
+                    if (Nexus.debug_draw_wirefame){
+                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.ibo_ls[n]);
+                        gl.drawElements(gl.LINES, gl_draw_count * 2, gl.UNSIGNED_SHORT, gl_start_offset * 2 * gl_size_in_bytes);
+                    }
+                    else
+                        gl.drawElements(gl.TRIANGLES, gl_draw_count, gl.UNSIGNED_SHORT, gl_start_offset * gl_size_in_bytes);
+                    // VIDA_CHANGE_END
+
 					rendered += end - offset;
 				}
 				offset = m.patches[p*3+1];
@@ -826,6 +841,11 @@ function removeNode(context, node) {
 	context.gl.deleteBuffer(m.vbo[n]);
 	context.gl.deleteBuffer(m.ibo[n]);
 	m.vbo[n] = m.ibo[n] = null;
+
+    // VIDA_CHANGE_BEGIN
+    context.gl.deleteBuffer(m.ibo_ls[n]);
+    m.ibo_ls[n] = null;
+    // VIDA_CHANGE_END
 
 	if(!m.vertex.texCoord) return;
 	var tex = m.patches[m.nfirstpatch[n]*3+2];  //TODO assuming one texture per node
@@ -926,6 +946,22 @@ function readyNode(context, node) {
 	var vertices = new Uint8Array(node.buffer, 0, nv*m.vsize);
 	var indices  = new Uint8Array(node.buffer, nv*m.vsize,  nf*m.fsize);
 
+    // VIDA_CHANGE_BEGIN
+    tmp_it=0;
+    var ls_indices = new Uint16Array(indices.length * 4);
+    for ( var it_ts = 0; it_ts < indices.length; it_ts += 6) {
+        //1
+        ls_indices[tmp_it++] = (indices[it_ts + 1] << 8) + indices[it_ts];
+        ls_indices[tmp_it++] = (indices[it_ts + 3] << 8) + indices[it_ts + 2];
+        //2
+        ls_indices[tmp_it++] = (indices[it_ts + 3] << 8) + indices[it_ts + 2];
+        ls_indices[tmp_it++] = (indices[it_ts + 5] << 8) + indices[it_ts + 4];
+        //3
+        ls_indices[tmp_it++] = (indices[it_ts + 1] << 8) + indices[it_ts];
+        ls_indices[tmp_it++] = (indices[it_ts + 5] << 8) + indices[it_ts + 4];
+    }
+    // VIDA_CHANGE_END
+
 	var gl = context.gl;
 	var vbo = m.vbo[n] = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
@@ -933,6 +969,12 @@ function readyNode(context, node) {
 	var ibo = m.ibo[n] = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    // VIDA_CHANGE_BEGIN
+    var ibo_ls = m.ibo_ls[n] = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo_ls);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ls_indices, gl.STATIC_DRAW);
+    // VIDA_CHANGE_END
 
 	m.status[n]--;
 	context.pending--;
