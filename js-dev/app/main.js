@@ -10,7 +10,7 @@
     camera.lookAt(new THREE.Vector3(0,2,0));
 
     var scene = new THREE.Scene();
-    scene.fog = new THREE.Fog( 0x050505, 2000, 3500 );
+    scene.fog = new THREE.FogExp2(0xf7f7f7, 0.0003);
     scene.add( new THREE.AmbientLight( 0x444444 ) );
 
     var light1 = new THREE.DirectionalLight( 0xffffff, 1.0 );
@@ -59,7 +59,7 @@
         container.appendChild( stats.domElement );
     }
 
-    if (_debug){
+    if (false){
         scene.add( new THREE.AxisHelper( 15 ) );
         scene.add( new THREE.GridHelper( 35, 35 ) );
     }

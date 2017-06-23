@@ -30,7 +30,7 @@ function createUI(){
     }
     uiTable = document.createElement("table");
     uiTable.setAttribute("id", "ui-table");
-    uiTable.style.color = "white";
+    uiTable.style.color = "black";
     uiTable.style.visibility = "visible";
     uiTable.style.display = "";
     uiDiv.appendChild(uiTable);
