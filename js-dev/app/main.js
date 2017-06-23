@@ -155,6 +155,8 @@
 
     var change_image_ref_to_png = function(mat_info_collection){
 
+        var bDisableBumpMapping = true;
+
         for ( var mat_info_prop in mat_info_collection ) {
 
             if (!mat_info_collection.hasOwnProperty(mat_info_prop))
@@ -176,9 +178,15 @@
 
                     case 'map_kd':
                     case 'map_ks':
+                        mat_info[ prop ] = value.replace(/\.[^/.]+$/, "") + ".png";
+                        break;
                     case 'map_bump':
                     case 'bump':
-                        mat_info[ prop ] = value.replace(/\.[^/.]+$/, "") + ".png";
+                        if (bDisableBumpMapping){
+                            delete mat_info[prop];
+                        }
+                        else
+                            mat_info[ prop ] = value.replace(/\.[^/.]+$/, "") + ".png";
                         break;
                     default:
                         break;

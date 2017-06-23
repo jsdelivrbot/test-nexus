@@ -10,5 +10,5 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 0.494737
 illum 2
-map_Bump Users
-map_Kd Users
+map_Bump Lungs-normal.png
+map_Kd Lungs-color.png
