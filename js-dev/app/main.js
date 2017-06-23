@@ -153,13 +153,50 @@
 
     THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
 
+    var change_image_ref_to_png = function(mat_info_collection){
+
+        for ( var mat_info_prop in mat_info_collection ) {
+
+            if (!mat_info_collection.hasOwnProperty(mat_info_prop))
+                continue;
+
+            var mat_info = mat_info_collection[mat_info_prop];
+
+            for ( var prop in mat_info ) {
+
+                if (!mat_info.hasOwnProperty(prop))
+                    continue;
+
+                var value = mat_info[ prop ];
+
+                if ( value === '' ) 
+                    continue;
+
+                switch ( prop.toLowerCase() ) {
+
+                    case 'map_kd':
+                    case 'map_ks':
+                    case 'map_bump':
+                    case 'bump':
+                        mat_info[ prop ] = value.replace(/\.[^/.]+$/, "") + ".png";
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    };
+
     var uploadObj = function( path, filename ){
 
         var mtlLoader = new THREE.MTLLoader();
 
         mtlLoader.setPath( path );
+        mtlLoader.setTexturePath( path + "/textures/");
 
         mtlLoader.load( filename +'.mtl', function( materials ) {
+    
+            change_image_ref_to_png(materials.materialsInfo);
 
             materials.preload();
 
@@ -248,7 +285,8 @@
                     }
                     else if (upload_format === "obj"){
 
-                        uploadObj( path, models[i]);
+                        //if (models[i] === "Connective.Ligaments.Capsula_articularis_membrana_fibrosa_R.000")
+                            uploadObj( path, models[i]);
                     }
                     else if (upload_format === "crt"){
 

@@ -1,6 +1,22 @@
 //
 //
 
+function uniq_fast(in_array) {
+    "use strict";
+    var seen = {};
+    var out = [];
+    var len = in_array.length;
+    var j = 0;
+    for (var i = 0; i < len; i++) {
+        var item = in_array[i];
+        if (seen[item] !== 1) {
+            seen[item] = 1;
+            out[j++] = item;
+        }
+    }
+    return out;
+}
+
 var fs = require("fs");
 var express = require("express");
 
@@ -17,14 +33,20 @@ app.get('/', function(req, res) {
 });
 
 app.get('/page/:model_id', function(req, res) {
-    console.log(req.params.model_id);
-    var arr = fs.readdirSync("resources/models/" + req.params.model_id);
+    var path = "resources/models/" + req.params.model_id;
+    console.log(path);
+    var arr = fs.readdirSync(path);
+    var output_array = [];
     for (var i = 0; i < arr.length; i++){
         var str = arr[i];
-        arr[i] = str.replace(/\.[^/.]+$/, "");
+        if (fs.lstatSync(path + "/" + str).isFile())
+        {
+            output_array.push(str.replace(/\.[^/.]+$/, ""));
+        }
     }
+    output_array = uniq_fast(output_array);
     res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify(arr));
+    res.send(JSON.stringify(output_array));
 });
 
 // Start server 
