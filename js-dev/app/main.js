@@ -46,7 +46,7 @@ var ZipLoaderPool = function(){
                         }
 
                     }, 15);
-                    
+
                     xhr = null;
                 }
             };
@@ -404,6 +404,13 @@ var ZipLoaderPool = new ZipLoaderPool();
 
     xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
 
+    function upoloadObj(path, model, scene, time_out){
+        setTimeout( function(){
+            var uploader = new ZipLoaderPool.OBJUploader( path, model, scene);
+            uploader.load();
+        }, time_out );
+    }
+
     xmlhttp.onreadystatechange=function(){
 
         try{
@@ -414,16 +421,15 @@ var ZipLoaderPool = new ZipLoaderPool();
                 for ( var i = 0; i < models.length; i++)//
                 {
                     var path = "models/" + page + "/";
+                    var model = models[i];
 
                     if (upload_format === "nxs") {
 
-                        uploadNxs( path, models[i]);
+                        uploadNxs( path, model);
                     }
                     else if (upload_format === "obj"){
 
-                        var uploader = new ZipLoaderPool.OBJUploader( path, models[i], scene);
-                        uploader.load();
-                        uploader = null;
+                        upoloadObj(path, model, scene, i * 2);
                     }
                     //else if (upload_format === "crt"){
                     //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
