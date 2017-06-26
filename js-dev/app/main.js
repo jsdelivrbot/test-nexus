@@ -36,16 +36,21 @@ var ZipLoaderPool = function(){
 
                     zip_workers_queue.push(blob);
 
-                    zip_worker_interval = setInterval( function(){
+                    if ( zip_workers_queue.length && 
+                         zip_workers_ative < zip_workers_max ) {
 
-                        if (zip_workers_queue.length && 
-                            zip_workers_ative < zip_workers_max){
-                            clearInterval(zip_worker_interval);
-                            zip_worker_interval = 0;
-                            createZipWorker(zip_workers_queue.shift());
-                        }
-
-                    }, 15);
+                        createZipWorker(zip_workers_queue.shift());
+                    }
+                    else {
+                        zip_worker_interval = setInterval( function(){
+                            if (zip_workers_queue.length && 
+                                zip_workers_ative < zip_workers_max){
+                                clearInterval(zip_worker_interval);
+                                zip_worker_interval = 0;
+                                createZipWorker(zip_workers_queue.shift());
+                            }
+                        }, 15);
+                    }
 
                     xhr = null;
                 }
@@ -80,29 +85,28 @@ var ZipLoaderPool = function(){
                     zip_reader = null;
                 }
 
-                if (obj_file && mtl_file){
+                setTimeout(function(){
+                    if (obj_file && mtl_file){
 
-                    var mtlLoader = new THREE.MTLLoader();
-                    mtlLoader.setTexturePath( _self.path + "/resources/");
-                    var materials = mtlLoader.parse( mtl_file );
-                    change_image_ref_to_png(materials.materialsInfo);
-                    materials.preload();
+                        var mtlLoader = new THREE.MTLLoader();
+                        mtlLoader.setTexturePath( _self.path + "/resources/");
+                        var materials = mtlLoader.parse( mtl_file );
+                        change_image_ref_to_png(materials.materialsInfo);
+                        materials.preload();
 
-                    var objLoader = new THREE.OBJLoader();
-                    objLoader.setMaterials( materials );
-                    objLoader.setPath( _self.path );
+                        var objLoader = new THREE.OBJLoader();
+                        objLoader.setMaterials( materials );
+                        objLoader.setPath( _self.path );
 
-                    var object = objLoader.parse( obj_file );
-                    object.position.set(0.0, 0.0, 0.0);
-                    object.scale.set(1.0, 1.0, 1.0);
-                    in_scene.add( object );
+                        var object = objLoader.parse( obj_file );
+                        object.position.set(0.0, 0.0, 0.0);
+                        object.scale.set(1.0, 1.0, 1.0);
+                        in_scene.add( object );
+                    }
 
-                    mtlLoader = null;
-                    objLoader = null;
-                }
-
-                mtl_file = null;
-                obj_file = null;
+                    mtl_file = null;
+                    obj_file = null;
+                },0);
             }
         }
 
@@ -404,11 +408,11 @@ var ZipLoaderPool = new ZipLoaderPool();
 
     xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
 
-    function upoloadObj(path, model, scene, time_out){
+    function upoloadObj(path, model, scene){
         setTimeout( function(){
             var uploader = new ZipLoaderPool.OBJUploader( path, model, scene);
             uploader.load();
-        }, time_out );
+        }, 0 );
     }
 
     xmlhttp.onreadystatechange=function(){
@@ -429,7 +433,7 @@ var ZipLoaderPool = new ZipLoaderPool();
                     }
                     else if (upload_format === "obj"){
 
-                        upoloadObj(path, model, scene, i * 2);
+                        upoloadObj(path, model, scene);
                     }
                     //else if (upload_format === "crt"){
                     //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
