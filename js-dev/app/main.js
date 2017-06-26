@@ -5,6 +5,14 @@
 (function main(){
     "use strict";
 
+    /* global zip */
+
+    // set up zip worker
+
+    zip.workerScriptsPath = "/zip-lib/";
+
+    // set up three.js
+
     var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 10000 );
     camera.position.set(0, 3, 30);
     camera.lookAt(new THREE.Vector3(0,2,0));
@@ -195,34 +203,116 @@
         }
     };
 
-    var uploadObj = function( path, filename ){
 
-        var mtlLoader = new THREE.MTLLoader();
+    function uploadObj(path, filename) {
 
-        mtlLoader.setPath( path );
-        mtlLoader.setTexturePath( path + "/textures/");
+        var url = path + "/data/" + filename + "/data.zip";
 
-        mtlLoader.load( filename +'.mtl', function( materials ) {
-    
-            change_image_ref_to_png(materials.materialsInfo);
+        var xhr = new XMLHttpRequest();
 
-            materials.preload();
+        //xhr.onprogress = calculateAndUpdateProgress;
+        
+        xhr.open('GET', url, true);
+        xhr.responseType = "blob";
 
-            var objLoader = new THREE.OBJLoader();
+        var zip_reader, zip_reader_count = 0, obj_file, mtl_file;
 
-            objLoader.setMaterials( materials );
-            objLoader.setPath( path );
+        function readZippedMtlData(text){
+            zip_reader_count--;
+            mtl_file = text;
+            createObject();
+        }
 
-            objLoader.load( filename +'.obj', function ( object ) {
-                object.position.set(0.0, 0.0, 0.0);
-                object.scale.set(1.0, 1.0, 1.0);
-                scene.add( object );
-            }, 
-            onProgress,
-            onError );
+        function readZippedObjData(text){
+            zip_reader_count--;
+            obj_file = text;
+            createObject();
+        }
 
-        });
-    };
+        function createObject(){
+
+            if (zip_reader_count === 0){ // all files unzipped
+
+                if (zip_reader)
+                    zip_reader.close(function() { }); // onclose callback
+
+                if (obj_file && mtl_file){
+
+                    var mtlLoader = new THREE.MTLLoader();
+                    mtlLoader.setTexturePath( path + "/resources/");
+                    var materials = mtlLoader.parse( mtl_file );
+                    change_image_ref_to_png(materials.materialsInfo);
+                    materials.preload();
+
+                    var objLoader = new THREE.OBJLoader();
+                    objLoader.setMaterials( materials );
+                    objLoader.setPath( path );
+
+                    var object = objLoader.parse( obj_file );
+                    object.position.set(0.0, 0.0, 0.0);
+                    object.scale.set(1.0, 1.0, 1.0);
+                    scene.add( object );
+
+                    mtlLoader = null;
+                    objLoader = null;
+                }
+
+                mtl_file = null;
+                obj_file = null;
+            }
+        }
+
+        xhr.onreadystatechange = function () {
+
+            if (xhr.readyState==4 && xhr.status==200) {
+
+                console.log(xhr.response);
+
+                var blob = xhr.response;
+                
+                // use a BlobReader to read the zip from a Blob object
+                zip.createReader(
+
+                    new zip.BlobReader(blob),
+
+                    function(reader) {
+
+                        zip_reader = reader;
+
+                        reader.getEntries( function(entries) {
+
+                            if (entries.length) {
+
+                                zip_reader_count = entries.length;
+
+                                for (var i = 0; i < entries.length; i++){
+
+                                    var filename = entries[i].filename;
+
+                                    if (/\.mtl$/.test(filename)){
+                                        entries[i].getData(
+                                            new zip.TextWriter(),
+                                            readZippedMtlData,
+                                            null // onprogress callback
+                                        );
+                                    }
+                                    else if (/\.obj$/.test(filename)){
+                                        entries[i].getData(
+                                            new zip.TextWriter(),
+                                            readZippedObjData,
+                                            null // onprogress callback
+                                        );
+                                    }
+                                }
+                            }
+                        });
+                    },
+                    function(error) {}  // onerror callback
+                );
+            }
+        };
+        xhr.send();
+    }
 
     function uploadNxs(path, filename){
         var nexus_obj = new NexusObject(path + filename + ".nxs", renderer, update_nexus_frame);
@@ -268,13 +358,13 @@
 
     var page = 'HumanBody-FullBody-insane';
 
-    var upload_format = getURLParameter("format") || 'nxs';
+    var upload_format = getURLParameter("format") || 'obj';
 
     page += "-" + upload_format;
     
     var  xmlhttp = new XMLHttpRequest();
 
-    xmlhttp.open("GET", document.location.origin + "/page/" + page, true);
+    xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
 
     xmlhttp.onreadystatechange=function(){
 
@@ -293,14 +383,12 @@
                     }
                     else if (upload_format === "obj"){
 
-                        //if (models[i] === "Connective.Ligaments.Capsula_articularis_membrana_fibrosa_R.000")
-                            uploadObj( path, models[i]);
+                        uploadObj( path, models[i]);
                     }
-                    else if (upload_format === "crt"){
-
-                        if (models[i] === "Digestive.Digestive_exterior.Jejunum")
-                            uploadCrt( path, models[i]);
-                    }
+                    //else if (upload_format === "crt"){
+                    //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
+                    //        uploadCrt( path, models[i]);
+                    //}
                 }
             }
         }

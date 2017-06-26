@@ -32,19 +32,27 @@ app.get('/', function(req, res) {
     res.render('nexus', {});
 });
 
-app.get('/page/:model_id', function(req, res) {
-    var path = "resources/models/" + req.params.model_id;
-    console.log(path);
-    var arr = fs.readdirSync(path);
-    var output_array = [];
-    for (var i = 0; i < arr.length; i++){
-        var str = arr[i];
-        if (fs.lstatSync(path + "/" + str).isFile())
-        {
-            output_array.push(str.replace(/\.[^/.]+$/, ""));
+app.get('/format/:data_format/page/:model_id', function(req, res) {
+
+    var output_array = [] , path, arr;
+
+    if (req.params.data_format === "obj"){
+        path = "resources/models/" + req.params.model_id + "/data/";
+        output_array = fs.readdirSync(path);
+    }
+    else if (req.params.data_format === "nxs"){
+        path = "resources/models/" + req.params.model_id;
+        arr = fs.readdirSync(path);
+        for (var i = 0; i < arr.length; i++){
+            var str = arr[i];
+            if (fs.lstatSync(path + "/" + str).isFile())
+            {
+                output_array.push(str.replace(/\.[^/.]+$/, ""));
+            }
         }
     }
     output_array = uniq_fast(output_array);
+    console.log(output_array);
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(output_array));
 });

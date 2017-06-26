@@ -109,8 +109,8 @@ module.exports = function (grunt) {
         copy: {
             resources: {
                 files: [
-                  { expand: true, src: ['models/**/*'], dest: 'public/' }
-                ],
+                  { expand: true, flatten: true, src: ['js-dev/zip-lib/*'], dest: 'public/zip-lib/' }
+                ]
             }
         },
         file_append: {
@@ -126,5 +126,5 @@ module.exports = function (grunt) {
           }
     });
 
-    grunt.registerTask('default', [ 'concat', 'jshint']);
+    grunt.registerTask('default', [ 'concat', 'jshint', "copy"]);
 };

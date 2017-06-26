@@ -42,8 +42,6 @@ function createUI(){
         0
     );
 
-    
-
     addButtonUI(
         uiTable,
         "Change wireframe mode",
