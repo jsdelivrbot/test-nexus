@@ -2,7 +2,7 @@
 //
 //
 
-var available_lods = [0.05, 0.15, 0.3, 0.5]
+var available_lods = [0.05, 0.15, 0.3, 0.5];
 
 var ZipLoaderPool = function(){
 
