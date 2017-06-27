@@ -2,6 +2,8 @@
 //
 //
 
+var available_lods = [0.05, 0.15, 0.3, 0.5]
+
 var ZipLoaderPool = function(){
 
     "use strict";
@@ -12,13 +14,13 @@ var ZipLoaderPool = function(){
     var zip_workers_ative = 0;
     var zip_workers_max = 6;
 
-    this.OBJUploader = function(in_path, in_filename, in_scene){
+    this.OBJUploader = function(in_path, in_filename, in_lod_param, in_parent_object){
 
         var _self = this;
 
         _self.filename = in_filename;
         _self.path = in_path;
-        _self.url = in_path + "/data/" + in_filename + "/data.zip";
+        _self.url = in_path + "/data/" + in_filename + "/" + in_lod_param.toFixed(3) + "/data.zip";
 
         _self.load = function(){
 
@@ -85,28 +87,31 @@ var ZipLoaderPool = function(){
                     zip_reader = null;
                 }
 
-                setTimeout(function(){
-                    if (obj_file && mtl_file){
+                if (obj_file && mtl_file){
 
+                    if (!in_parent_object.shared_materials){
                         var mtlLoader = new THREE.MTLLoader();
                         mtlLoader.setTexturePath( _self.path + "/resources/");
                         var materials = mtlLoader.parse( mtl_file );
                         change_image_ref_to_png(materials.materialsInfo);
                         materials.preload();
-
-                        var objLoader = new THREE.OBJLoader();
-                        objLoader.setMaterials( materials );
-                        objLoader.setPath( _self.path );
-
-                        var object = objLoader.parse( obj_file );
-                        object.position.set(0.0, 0.0, 0.0);
-                        object.scale.set(1.0, 1.0, 1.0);
-                        in_scene.add( object );
+                        in_parent_object.shared_materials = materials;
                     }
 
-                    mtl_file = null;
-                    obj_file = null;
-                },0);
+                    var objLoader = new THREE.OBJLoader();
+                    objLoader.setMaterials( in_parent_object.shared_materials );
+                    objLoader.setPath( _self.path );
+
+                    var object = objLoader.parse( obj_file );
+                    object.position.set(0.0, 0.0, 0.0);
+                    object.scale.set(1.0, 1.0, 1.0);
+
+                    object.lod = in_lod_param;
+                    in_parent_object.lod_objects[in_lod_param] = object;
+                }
+
+                mtl_file = null;
+                obj_file = null;
             }
         }
 
@@ -215,6 +220,7 @@ var ZipLoaderPool = new ZipLoaderPool();
     var scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(0xf7f7f7, 0.0003);
     scene.add( new THREE.AmbientLight( 0x444444 ) );
+    var scene_lods = [];
 
     var light1 = new THREE.DirectionalLight( 0xffffff, 1.0 );
     light1.position.set( 1, 1, -1 );
@@ -314,6 +320,12 @@ var ZipLoaderPool = new ZipLoaderPool();
             nexus_context.rendered = 0;
         }
 
+        for (var i = 0; i < scene_lods.length; i++){
+            var lod = available_lods[0];
+            var object = scene_lods[i];
+            object.children = object.lod_objects[lod] ? [object.lod_objects[lod]] : [];
+        }
+
         renderer.render( scene, camera );
 
         updateContextInfo(renderer, nexus_context);
@@ -408,13 +420,6 @@ var ZipLoaderPool = new ZipLoaderPool();
 
     xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
 
-    function upoloadObj(path, model, scene){
-        setTimeout( function(){
-            var uploader = new ZipLoaderPool.OBJUploader( path, model, scene);
-            uploader.load();
-        }, 0 );
-    }
-
     xmlhttp.onreadystatechange=function(){
 
         try{
@@ -425,15 +430,24 @@ var ZipLoaderPool = new ZipLoaderPool();
                 for ( var i = 0; i < models.length; i++)//
                 {
                     var path = "models/" + page + "/";
-                    var model = models[i];
+                    var model_name = models[i];
 
                     if (upload_format === "nxs") {
 
-                        uploadNxs( path, model);
+                        uploadNxs( path, model_name);
                     }
                     else if (upload_format === "obj"){
 
-                        upoloadObj(path, model, scene);
+                        var object = new THREE.Object3D();
+                        object.name = model_name;
+                        object.shared_materials = null;
+                        object.lod_objects = {};
+
+                        var uploader = new ZipLoaderPool.OBJUploader( path, model_name, available_lods[0] , object);
+                        uploader.load();
+
+                        scene_lods.push(object);
+                        scene.add(object);
                     }
                     //else if (upload_format === "crt"){
                     //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
