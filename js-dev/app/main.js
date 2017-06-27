@@ -326,7 +326,11 @@ var ZipLoaderPool = new ZipLoaderPool();
             object.children = object.lod_objects[lod] ? [object.lod_objects[lod]] : [];
         }
 
+        Nexus.beginFrame(renderer.context);
+
         renderer.render( scene, camera );
+
+        Nexus.endFrame(renderer.context);
 
         updateContextInfo(renderer, nexus_context);
     }
@@ -352,9 +356,9 @@ var ZipLoaderPool = new ZipLoaderPool();
     }
 
     function update_nexus_frame() {
-        Nexus.beginFrame(renderer.context);
-        renderer.render( scene, camera );
-        Nexus.endFrame(renderer.context);
+        //Nexus.beginFrame(renderer.context);
+        //renderer.render( scene, camera );
+        //Nexus.endFrame(renderer.context);
     }
 
     var onProgress = function ( xhr ) {
