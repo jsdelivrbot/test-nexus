@@ -108,6 +108,12 @@ var ZipLoaderPool = function(){
 
                     object.lod = in_lod_param;
                     in_parent_object.lod_objects[in_lod_param] = object;
+
+                    object.traverseVisible(function(_this){
+                        _this.onBeforeRender = function( renderer, scene, camera, geometry, material, group ){
+                            in_parent_object.onBeforeRender(_this, renderer, scene, camera, geometry, material, group);
+                        };
+                    });
                 }
 
                 mtl_file = null;
@@ -236,13 +242,42 @@ var ZipLoaderPool = new ZipLoaderPool();
     renderer.setSize( window.innerWidth, window.innerHeight);
 
     var container = document.getElementById( 'vida.web.container');
+    renderer.domElement.style.zIndex = 1;
     container.appendChild( renderer.domElement );
 
     var _debug = true;
 
-    var controls;
+    var controls, input_container = renderer.domElement;
+
+    var debug_canvas;
+
+    if (true){
+        debug_canvas = document.createElement('canvas');
+        container.appendChild(debug_canvas);
+        debug_canvas.style.position = 'absolute';
+        debug_canvas.style.zIndex = 2;
+        debug_canvas.style.top =renderer.domElement.offsetTop + "px";
+        debug_canvas.style.left =renderer.domElement.offsetLeft + "px";
+        debug_canvas.width = renderer.domElement.width;
+        debug_canvas.height = renderer.domElement.height;
+
+        var debug_canvas_observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.type === "attributes") {
+                    debug_canvas.style.top =renderer.domElement.offsetTop + "px";
+                    debug_canvas.style.left =renderer.domElement.offsetLeft + "px";
+                    debug_canvas.width = renderer.domElement.width;
+                    debug_canvas.height = renderer.domElement.height;
+                }
+            });
+        });
+        debug_canvas_observer.observe(renderer.domElement, { attributes: true });
+        input_container = debug_canvas;
+    }
+
+
     if (true){ 
-        controls= new THREE.OrbitControls(camera, renderer.domElement );
+        controls= new THREE.OrbitControls(camera, input_container );
         controls.target = new THREE.Vector3(0, 2, 0);
         controls.maxDistance = 500;
         controls.minDistance = 1;
@@ -321,18 +356,102 @@ var ZipLoaderPool = new ZipLoaderPool();
         }
 
         for (var i = 0; i < scene_lods.length; i++){
-            var lod = available_lods[0];
+
             var object = scene_lods[i];
-            object.children = object.lod_objects[lod] ? [object.lod_objects[lod]] : [];
+
+            object.children = [];
+
+            if (object.lod_objects[object.lod_desired]){
+                object.children = [object.lod_objects[object.lod_desired]];
+            }
+            else {
+
+                var start_indx = available_lods.indexOf(object.lod_desired);
+
+                for ( var j = start_indx - 1; j >= 0; j--){
+
+                    var lod = available_lods[j];
+
+                    if (object.lod_objects[lod]){
+                        object.children = [object.lod_objects[lod]];
+                        break;
+                    }
+                }
+            }
         }
 
         Nexus.beginFrame(renderer.context);
 
         renderer.render( scene, camera );
 
+        if (false && debug_canvas)
+            renderDebugCanvas(debug_canvas, scene_lods);
+
         Nexus.endFrame(renderer.context);
 
         updateContextInfo(renderer, nexus_context);
+    }
+
+    function renderDebugCanvas(debug_canvas, scene){
+
+        var ctx = debug_canvas.getContext('2d');
+
+        ctx.font = '13px serif';
+
+        ctx.clearRect(0, 0, debug_canvas.width, debug_canvas.height);
+
+        for (var i = 0; i < scene_lods.length; i++){
+            var lod = available_lods[0];
+            var object = scene_lods[i];
+            object.children = object.lod_objects[lod] ? [object.lod_objects[lod]] : [];
+
+            var mesh = object.children[0] ? object.children[0].children[0] : null;
+
+            if (mesh && mesh.geometry.boundingSphere){
+
+                var sphere = mesh.geometry.boundingSphere;
+
+                var center = toScreenPosition(sphere.center, camera, debug_canvas);
+                var radius = toScreenLength(sphere.radius, camera, debug_canvas);
+
+                ctx.beginPath();
+                ctx.arc( center.x, center.y, radius, 0, 2 * Math.PI );
+                ctx.stroke();
+
+                //ctx.fillText( object.name, center.x, center.y);
+            }
+        }
+    }
+
+    function toScreenPosition(position, camera, canvas){
+        var vector = new THREE.Vector3(position.x, position.y, position.z);
+        var widthHalf = 0.5 * canvas.width;
+        var heightHalf = 0.5 * canvas.height;
+        vector.project(camera);
+        vector.x = ( vector.x * widthHalf ) + widthHalf;
+        vector.y = - ( vector.y * heightHalf ) + heightHalf;
+        return { x : vector.x, y : vector.y };
+    }
+
+    function toScreenLength(length_units, camera, canvas){
+        var xAxis = new THREE.Vector3(0, 0, 0);
+        var yAxis = new THREE.Vector3(0, 0, 0);
+        var zAxis = new THREE.Vector3(0, 0, 0);
+        camera.matrixWorld.extractBasis(xAxis, yAxis, zAxis);
+        var widthHalf = 0.5 * canvas.width;
+        var heightHalf = 0.5 * canvas.height;
+        var z = new THREE.Vector3(0, 0, 0);
+        z.project(camera);
+        z.x = ( z.x * widthHalf ) + widthHalf;
+        z.y = - ( z.y * heightHalf ) + heightHalf;
+        var v = new THREE.Vector3(length_units * yAxis.x, length_units * yAxis.y, length_units * yAxis.z);
+        v.project(camera);
+        v.x = ( v.x * widthHalf ) + widthHalf;
+        v.y = - ( v.y * heightHalf ) + heightHalf;
+        v.x = v.x - z.x;
+        v.y = v.y - z.y;
+        var l = Math.sqrt(v.x * v.x + v.y * v.y);
+        return l;
     }
 
     function updateContextInfo( renderer, nexus_context ) {
@@ -379,6 +498,115 @@ var ZipLoaderPool = new ZipLoaderPool();
         scene.add(nexus_obj);
     }
 
+    animate();
+
+    var page = 'HumanBody-FullBody-insane';
+
+    var upload_format = getURLParameter("format") || 'obj';
+
+    page += "-" + upload_format;
+    
+    var  xmlhttp = new XMLHttpRequest();
+
+    xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
+
+   
+    function uploadOBJ(path, model_name){
+    
+        var min_lod = available_lods[0];
+
+        var object = new THREE.Object3D();
+        object.name = model_name;
+        object.shared_materials = null;
+        object.lod_objects = {};
+        object.lod_upload_state = { };
+        object.lod_desired = min_lod;
+
+        object.onBeforeRender = function(draw_object, renderer, scene, camera, geometry, material, group ){
+
+            var object = this;
+
+            var sphere = draw_object.geometry.boundingSphere;
+            var radius = toScreenLength(sphere.radius, camera, debug_canvas);
+
+            if (draw_object.material){
+                draw_object.material.wireframe = Nexus.debug_draw_wirefame;
+            }
+
+            object.lod_desired = min_lod;
+
+            var size = renderer.getSize();
+
+            var resolution = Math.sqrt( size.width * size.width + size.height + size.height );
+
+            var parameter = radius / resolution;
+
+            // available_lods = [0.05, 0.15, 0.3, 0.5];
+            if ( parameter <= 0.1){
+                object.lod_desired = 0.05;
+            }
+            else if ( parameter <= 0.2){
+                object.lod_desired = 0.15;
+            }
+            else if ( parameter <= 0.3){
+                object.lod_desired = 0.3;
+            }
+            else if ( parameter > 0.3){
+                object.lod_desired = 0.5;
+            }
+
+            if (!object.lod_upload_state[object.lod_desired]){
+
+                object.lod_upload_state[object.lod_desired] = true;
+                var uploader = new ZipLoaderPool.OBJUploader( path, model_name, object.lod_desired , object);
+                uploader.load();
+            }
+        };
+
+        object.lod_upload_state[min_lod] = true;
+        var uploader = new ZipLoaderPool.OBJUploader( path, model_name, min_lod , object);
+        uploader.load();
+
+        scene_lods.push(object);
+        scene.add(object);
+    }
+
+    xmlhttp.onreadystatechange=function(){
+
+        try{
+            if (xmlhttp.readyState==4 && xmlhttp.status==200){
+
+                var models = JSON.parse(xmlhttp.responseText);
+
+                for ( var i = 0; i < models.length; i++)//
+                {
+                    var path = "models/" + page + "/";
+                    var model_name = models[i];
+
+                    if (upload_format === "nxs") {
+
+                        uploadNxs( path, model_name);
+                    }
+                    else if (upload_format === "obj"){
+
+                        uploadOBJ(path, model_name);
+                    }
+                    //else if (upload_format === "crt"){
+                    //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
+                    //        uploadCrt( path, models[i]);
+                    //}
+                }
+            }
+        }
+        catch(expt) // 
+        {
+            console.log(expt);
+        }
+    };
+    xmlhttp.send();
+}());
+
+/*
     function uploadCrt(path, filename){
 
         filename = filename + ".crt";
@@ -411,59 +639,4 @@ var ZipLoaderPool = new ZipLoaderPool();
             //setTimeout(profile, 10);
         } );
     }
-
-    animate();
-
-    var page = 'HumanBody-FullBody-insane';
-
-    var upload_format = getURLParameter("format") || 'obj';
-
-    page += "-" + upload_format;
-    
-    var  xmlhttp = new XMLHttpRequest();
-
-    xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
-
-    xmlhttp.onreadystatechange=function(){
-
-        try{
-            if (xmlhttp.readyState==4 && xmlhttp.status==200){
-
-                var models = JSON.parse(xmlhttp.responseText);
-
-                for ( var i = 0; i < models.length; i++)//
-                {
-                    var path = "models/" + page + "/";
-                    var model_name = models[i];
-
-                    if (upload_format === "nxs") {
-
-                        uploadNxs( path, model_name);
-                    }
-                    else if (upload_format === "obj"){
-
-                        var object = new THREE.Object3D();
-                        object.name = model_name;
-                        object.shared_materials = null;
-                        object.lod_objects = {};
-
-                        var uploader = new ZipLoaderPool.OBJUploader( path, model_name, available_lods[0] , object);
-                        uploader.load();
-
-                        scene_lods.push(object);
-                        scene.add(object);
-                    }
-                    //else if (upload_format === "crt"){
-                    //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
-                    //        uploadCrt( path, models[i]);
-                    //}
-                }
-            }
-        }
-        catch(expt) // 
-        {
-            console.log(expt);
-        }
-    };
-    xmlhttp.send();
-}());
+    */
