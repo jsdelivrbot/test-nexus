@@ -28,8 +28,12 @@ app.set('views', __dirname + '/views');
 app.use(express.static('public'));
 app.use(express.static('resources'));
 
+var version = fs.readFileSync("version", "utf8");
+
 app.get('/', function(req, res) {
-    res.render('nexus', {});
+    res.render('nexus', {
+        version : version
+    });
 });
 
 app.get('/format/:data_format/page/:model_id', function(req, res) {

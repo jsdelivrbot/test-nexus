@@ -2,7 +2,12 @@
 //
 //
 
-var available_lods = [0.05, 0.15, 0.3, 0.5];
+var available_lods = [0.1, 0.2, 0.3, 0.5];
+
+var DEBUG = {
+    bUseMaxLod : false,
+    bUseWireframe : false
+};
 
 var ZipLoaderPool = function(){
 
@@ -14,6 +19,8 @@ var ZipLoaderPool = function(){
     var zip_workers_ative = 0;
     var zip_workers_max = 6;
 
+    var xhrs_data = {};
+
     this.OBJUploader = function(in_path, in_filename, in_lod_param, in_parent_object){
 
         var _self = this;
@@ -24,41 +31,68 @@ var ZipLoaderPool = function(){
 
         _self.load = function(){
 
+            var uuid = generateUUID();
+
             var xhr = new XMLHttpRequest();
             xhr.open('GET', _self.url, true);
             xhr.responseType = "blob";
+
+            xhrs_data[uuid] = {
+                loaded : 0,
+                total : 0
+            };
+
+            xhr.onprogress = function(event) {
+
+                xhrs_data[uuid].loaded = event.loaded; // bytes
+                xhrs_data[uuid].total = event.total;
+
+                var loaded = 0, total = 0;
+
+                for (var _uuid in xhrs_data){
+                    if (xhrs_data[_uuid]){
+                        loaded += xhrs_data[_uuid].loaded;
+                        total += xhrs_data[_uuid].total;
+                    }
+                }
+
+                var e = document.createEvent('Event');
+                e.initEvent("UploadData.update", true, true);
+                e.loaded = loaded;
+                e.total = total;
+                document.dispatchEvent(e);
+            };
 
             xhr.onreadystatechange = function () {
 
                 if (xhr.readyState==4 && xhr.status==200) {
 
-                    console.log(xhr.response);
+                    console.log(in_filename + " : " + in_lod_param);
 
                     var blob = xhr.response;
 
-                    zip_workers_queue.push(blob);
+                    createZipWorker(blob);
 
-                    if ( zip_workers_queue.length && 
-                         zip_workers_ative < zip_workers_max ) {
+                    // TODO FIX WORKER QUEUE !
 
-                        createZipWorker(zip_workers_queue.shift());
-                    }
-                    else {
-                        zip_worker_interval = setInterval( function(){
-                            if (zip_workers_queue.length && 
-                                zip_workers_ative < zip_workers_max){
-                                clearInterval(zip_worker_interval);
-                                zip_worker_interval = 0;
-                                createZipWorker(zip_workers_queue.shift());
-                            }
-                        }, 15);
-                    }
+                    /*zip_workers_queue.push(blob);
+
+                    zip_worker_interval = setInterval( function(){
+                        if (zip_workers_queue.length && 
+                            zip_workers_ative < zip_workers_max){
+                            clearInterval(zip_worker_interval);
+                            zip_worker_interval = 0;
+                            createZipWorker(zip_workers_queue.shift());
+                        }
+                    }, 15);*/
 
                     xhr = null;
                 }
             };
             xhr.send();
         };
+
+        _self.onLoad = function(_self){};
 
         // -----------------------------------------------------------
 
@@ -90,11 +124,14 @@ var ZipLoaderPool = function(){
                 if (obj_file && mtl_file){
 
                     if (!in_parent_object.shared_materials){
+
                         var mtlLoader = new THREE.MTLLoader();
                         mtlLoader.setTexturePath( _self.path + "/resources/");
                         var materials = mtlLoader.parse( mtl_file );
+
                         change_image_ref_to_png(materials.materialsInfo);
                         materials.preload();
+
                         in_parent_object.shared_materials = materials;
                     }
 
@@ -107,13 +144,20 @@ var ZipLoaderPool = function(){
                     object.scale.set(1.0, 1.0, 1.0);
 
                     object.lod = in_lod_param;
+
                     in_parent_object.lod_objects[in_lod_param] = object;
 
                     object.traverseVisible(function(_this){
-                        _this.onBeforeRender = function( renderer, scene, camera, geometry, material, group ){
-                            in_parent_object.onBeforeRender(_this, renderer, scene, camera, geometry, material, group);
+                        _this.onAfterRender = function( renderer, scene, camera, geometry, material, group ){
+                            in_parent_object.onAfterRender(in_parent_object, _this, renderer, scene, camera, geometry, material, group);
                         };
                     });
+
+                    object.visible = false;
+
+                    in_parent_object.add(object);
+
+                    _self.onLoad(_self);
                 }
 
                 mtl_file = null;
@@ -205,6 +249,43 @@ var ZipLoaderPool = function(){
             }
         }
     };
+
+    var generateUUID = function () {
+
+        // http://www.broofa.com/Tools/Math.uuid.htm
+
+        var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
+        var uuid = new Array( 36 );
+        var rnd = 0, r;
+
+        return function generateUUID() {
+
+            for ( var i = 0; i < 36; i ++ ) {
+
+                if ( i === 8 || i === 13 || i === 18 || i === 23 ) {
+
+                    uuid[ i ] = '-';
+
+                } else if ( i === 14 ) {
+
+                    uuid[ i ] = '4';
+
+                } else {
+
+                    if ( rnd <= 0x02 ) rnd = 0x2000000 + ( Math.random() * 0x1000000 ) | 0;
+                    r = rnd & 0xf;
+                    rnd = rnd >> 4;
+                    uuid[ i ] = chars[ ( i === 19 ) ? ( r & 0x3 ) | 0x8 : r ];
+
+                }
+
+            }
+
+            return uuid.join( '' );
+
+        };
+
+    }();
 };
 var ZipLoaderPool = new ZipLoaderPool();
 
@@ -240,6 +321,8 @@ var ZipLoaderPool = new ZipLoaderPool();
     renderer.setClearColor( scene.fog.color );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight);
+
+    var bRedraw = false;
 
     var container = document.getElementById( 'vida.web.container');
     renderer.domElement.style.zIndex = 1;
@@ -342,54 +425,69 @@ var ZipLoaderPool = new ZipLoaderPool();
         if (controls)
             controls.update(delta);
 
+        Nexus.debug_draw_wirefame = DEBUG.bUseWireframe;
+
         var nexus_context = null;
 
-        if (Nexus && Nexus.contexts)
-            Nexus.contexts.forEach(function(g) { 
-                if(g.gl == renderer.context) {
-                    nexus_context = g;
-                }
-            });
+        bRedraw = true; // TODO
 
-        if (nexus_context){
-            nexus_context.rendered = 0;
-        }
+        if (bRedraw){
 
-        for (var i = 0; i < scene_lods.length; i++){
+            if (Nexus && Nexus.contexts)
+                Nexus.contexts.forEach(function(g) { 
+                    if(g.gl == renderer.context) {
+                        nexus_context = g;
+                    }
+                });
 
-            var object = scene_lods[i];
-
-            object.children = [];
-
-            if (object.lod_objects[object.lod_desired]){
-                object.children = [object.lod_objects[object.lod_desired]];
+            if (nexus_context){
+                nexus_context.rendered = 0;
             }
-            else {
 
-                var start_indx = available_lods.indexOf(object.lod_desired);
+            for (var i = 0; i < scene_lods.length; i++){
 
-                for ( var j = start_indx - 1; j >= 0; j--){
+                var object = scene_lods[i];
 
-                    var lod = available_lods[j];
-
-                    if (object.lod_objects[lod]){
-                        object.children = [object.lod_objects[lod]];
-                        break;
+                for (var lodId in object.lod_objects){
+                    if (object.lod_objects[lodId]){
+                        object.lod_objects[lodId].visible = false;
                     }
                 }
+
+                if (object.lod_objects[object.lod_desired]){
+                    object.lod_objects[object.lod_desired].visible = true;
+                }
+                else {
+
+                    var start_indx = available_lods.indexOf(object.lod_desired);
+
+                    for ( var j = start_indx - 1; j >= 0; j--){
+
+                        var lod = available_lods[j];
+
+                        if (object.lod_objects[lod]){
+                            object.lod_objects[lod].visible = true;
+                            break;
+                        }
+                    }
+                }
+
+                object.lod_desired = available_lods[0]; // reset LOD - will be set in onAfterRender
             }
+
+            Nexus.beginFrame(renderer.context);
+
+            renderer.render( scene, camera );
+
+            if (false && debug_canvas)
+                renderDebugCanvas(debug_canvas, scene_lods);
+
+            Nexus.endFrame(renderer.context);
+
+            updateContextInfo(renderer, nexus_context);
         }
 
-        Nexus.beginFrame(renderer.context);
-
-        renderer.render( scene, camera );
-
-        if (false && debug_canvas)
-            renderDebugCanvas(debug_canvas, scene_lods);
-
-        Nexus.endFrame(renderer.context);
-
-        updateContextInfo(renderer, nexus_context);
+        bRedraw = false;
     }
 
     function renderDebugCanvas(debug_canvas, scene){
@@ -475,9 +573,7 @@ var ZipLoaderPool = new ZipLoaderPool();
     }
 
     function update_nexus_frame() {
-        //Nexus.beginFrame(renderer.context);
-        //renderer.render( scene, camera );
-        //Nexus.endFrame(renderer.context);
+        bRedraw = true;
     }
 
     var onProgress = function ( xhr ) {
@@ -510,61 +606,71 @@ var ZipLoaderPool = new ZipLoaderPool();
 
     xmlhttp.open("GET", document.location.origin + "/format/" + upload_format +"/page/" + page, true);
 
-   
+    function updateLOD(object, mesh, renderer, scene, camera, geometry, material, group ){
+
+        var sphere = mesh.geometry.boundingSphere;
+        var radius = toScreenLength(sphere.radius, camera, debug_canvas);
+
+        if (mesh.material){
+            mesh.material.wireframe = DEBUG.bUseWireframe;
+        }
+
+        var size = renderer.getSize();
+
+        var resolution = Math.sqrt( size.width * size.width + size.height + size.height );
+
+        var parameter = radius / resolution;
+
+        if (DEBUG.bUseMaxLod)
+            object.lod_desired = available_lods[available_lods.length - 1];
+
+        if ( parameter <= 0.1){
+            if (object.lod_desired < available_lods[0])
+                object.lod_desired = available_lods[0];
+        }
+        else if ( parameter <= 0.2){
+            if (object.lod_desired < available_lods[1])
+                object.lod_desired = available_lods[1];
+        }
+        else if ( parameter <= 0.3){
+            if (object.lod_desired < available_lods[2])
+                object.lod_desired = available_lods[2];
+        }
+        else if ( parameter > 0.3){
+            if (object.lod_desired < available_lods[3])
+                object.lod_desired = available_lods[3];
+        }
+
+        if (!object.lod_upload_state[object.lod_desired]){
+
+            object.lod_upload_state[object.lod_desired] = true;
+            var uploader = new ZipLoaderPool.OBJUploader( object.path, object.name, object.lod_desired , object);
+            uploader.onLoad = function(){
+                bRedraw = true;
+            };
+            uploader.load();
+        }
+    }
+
     function uploadOBJ(path, model_name){
     
         var min_lod = available_lods[0];
 
         var object = new THREE.Object3D();
+        object.path = path;
         object.name = model_name;
         object.shared_materials = null;
         object.lod_objects = {};
         object.lod_upload_state = { };
         object.lod_desired = min_lod;
 
-        object.onBeforeRender = function(draw_object, renderer, scene, camera, geometry, material, group ){
-
-            var object = this;
-
-            var sphere = draw_object.geometry.boundingSphere;
-            var radius = toScreenLength(sphere.radius, camera, debug_canvas);
-
-            if (draw_object.material){
-                draw_object.material.wireframe = Nexus.debug_draw_wirefame;
-            }
-
-            object.lod_desired = min_lod;
-
-            var size = renderer.getSize();
-
-            var resolution = Math.sqrt( size.width * size.width + size.height + size.height );
-
-            var parameter = radius / resolution;
-
-            // available_lods = [0.05, 0.15, 0.3, 0.5];
-            if ( parameter <= 0.1){
-                object.lod_desired = 0.05;
-            }
-            else if ( parameter <= 0.2){
-                object.lod_desired = 0.15;
-            }
-            else if ( parameter <= 0.3){
-                object.lod_desired = 0.3;
-            }
-            else if ( parameter > 0.3){
-                object.lod_desired = 0.5;
-            }
-
-            if (!object.lod_upload_state[object.lod_desired]){
-
-                object.lod_upload_state[object.lod_desired] = true;
-                var uploader = new ZipLoaderPool.OBJUploader( path, model_name, object.lod_desired , object);
-                uploader.load();
-            }
-        };
+        object.onAfterRender = updateLOD;
 
         object.lod_upload_state[min_lod] = true;
         var uploader = new ZipLoaderPool.OBJUploader( path, model_name, min_lod , object);
+        uploader.onLoad = function(){
+            bRedraw = true;
+        };
         uploader.load();
 
         scene_lods.push(object);

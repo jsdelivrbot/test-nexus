@@ -37,6 +37,13 @@ function createUI(){
 
     addLabelUI(
         uiTable,
+        "Build version",
+        "ui-gl.build-version",
+        document.getElementById("build.version").innerHTML
+    );
+
+    addLabelUI(
+        uiTable,
         "Face count",
         "ui-gl.draw-face.count",
         0
@@ -46,13 +53,29 @@ function createUI(){
         uiTable,
         "Change wireframe mode",
         "ui-gl.draw-wireframe",
-        "Click to change",
+        DEBUG.bUseWireframe,
         function(){
-            if (!Nexus.debug_draw_wirefame)
-                Nexus.debug_draw_wirefame = true;
-            else
-                Nexus.debug_draw_wirefame = false;
+            DEBUG.bUseWireframe = !DEBUG.bUseWireframe;
+            document.getElementById("ui-gl.draw-wireframe").innerText = DEBUG.bUseWireframe;
         }
+    );
+
+    addButtonUI(
+        uiTable,
+        "Use max LOD",
+        "ui-gl.use-max-lod",
+        DEBUG.bUseMaxLod,
+        function(){
+            DEBUG.bUseMaxLod = !DEBUG.bUseMaxLod;
+            document.getElementById("ui-gl.use-max-lod").innerText = DEBUG.bUseMaxLod;
+        }
+    );
+
+    addLabelUI(
+        uiTable,
+        "Upload size indicator",
+        "ui-gl.upload-indicator",
+        "0.00 / 0.00 Mb"
     );
 }
 
@@ -61,6 +84,18 @@ function updateContextInfo(e){
     var element = document.getElementById("ui-gl.draw-face.count");
     if (element){
         element.innerHTML = e.info.faces;
+    }
+}
+
+function updateUploadIndicator(e){
+    "use strict";
+    var element = document.getElementById("ui-gl.upload-indicator");
+    if (element){
+
+        var loaded = ( e.loaded / ( 1024 * 1024 ) ).toFixed(2);
+        var total = ( e.total / ( 1024 * 1024 ) ).toFixed(2);
+
+        element.innerHTML = loaded + " / " + total + " Mb";
     }
 }
 
@@ -176,3 +211,4 @@ function addRangeUI( table , description, id, values, onChangeFunction){
 
 createUI();
 document.addEventListener('ContextInfo.update', updateContextInfo, false); 
+document.addEventListener('UploadData.update', updateUploadIndicator, false); 
