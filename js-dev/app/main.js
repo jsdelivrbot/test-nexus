@@ -2,11 +2,30 @@
 //
 //
 
+function detectmob() { 
+    "use strict";
+    /* global navigator */
+    if( navigator.userAgent.match(/Android/i) ||
+     navigator.userAgent.match(/webOS/i) ||
+     navigator.userAgent.match(/iPhone/i) ||
+     navigator.userAgent.match(/iPad/i) ||
+     navigator.userAgent.match(/iPod/i) ||
+     navigator.userAgent.match(/BlackBerry/i) ||
+     navigator.userAgent.match(/Windows Phone/i)
+    ){
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 var available_lods = [0.1, 0.2, 0.3, 0.5];
 
 var DEBUG = {
     bUseMaxLod : false,
-    bUseWireframe : false
+    bUseWireframe : false,
+    bIsMobile : detectmob()
 };
 
 var ZipLoaderPool = function(){
@@ -21,6 +40,31 @@ var ZipLoaderPool = function(){
 
     var xhrs_data = {};
 
+    function dispatch_UploadData_Event(){
+
+        var loaded = 0, total = 0;
+        var created_objects = 0, total_objects = 0;
+
+        for (var _uuid in xhrs_data){
+            if (xhrs_data[_uuid]){
+                loaded += xhrs_data[_uuid].loaded;
+                total += xhrs_data[_uuid].total;
+
+                if (xhrs_data[_uuid].object_created)
+                    created_objects++;
+                total_objects++;
+            }
+        }
+
+        var e = document.createEvent('Event');
+        e.initEvent("UploadData.update", true, true);
+        e.loaded = loaded;
+        e.total = total;
+        e.created_objects = created_objects;
+        e.total_objects = total_objects;
+        document.dispatchEvent(e);
+    }
+
     this.OBJUploader = function(in_path, in_filename, in_lod_param, in_parent_object){
 
         var _self = this;
@@ -29,9 +73,9 @@ var ZipLoaderPool = function(){
         _self.path = in_path;
         _self.url = in_path + "/data/" + in_filename + "/" + in_lod_param.toFixed(3) + "/data.zip";
 
-        _self.load = function(){
+        var uuid = generateUUID();
 
-            var uuid = generateUUID();
+        _self.load = function(){
 
             var xhr = new XMLHttpRequest();
             xhr.open('GET', _self.url, true);
@@ -39,7 +83,8 @@ var ZipLoaderPool = function(){
 
             xhrs_data[uuid] = {
                 loaded : 0,
-                total : 0
+                total : 0,
+                object_created : false
             };
 
             xhr.onprogress = function(event) {
@@ -47,20 +92,7 @@ var ZipLoaderPool = function(){
                 xhrs_data[uuid].loaded = event.loaded; // bytes
                 xhrs_data[uuid].total = event.total;
 
-                var loaded = 0, total = 0;
-
-                for (var _uuid in xhrs_data){
-                    if (xhrs_data[_uuid]){
-                        loaded += xhrs_data[_uuid].loaded;
-                        total += xhrs_data[_uuid].total;
-                    }
-                }
-
-                var e = document.createEvent('Event');
-                e.initEvent("UploadData.update", true, true);
-                e.loaded = loaded;
-                e.total = total;
-                document.dispatchEvent(e);
+                dispatch_UploadData_Event();
             };
 
             xhr.onreadystatechange = function () {
@@ -158,6 +190,10 @@ var ZipLoaderPool = function(){
                     in_parent_object.add(object);
 
                     _self.onLoad(_self);
+
+                    xhrs_data[uuid].object_created = true;
+
+                    dispatch_UploadData_Event();
                 }
 
                 mtl_file = null;
@@ -358,19 +394,27 @@ var ZipLoaderPool = new ZipLoaderPool();
         input_container = debug_canvas;
     }
 
-
-    if (true){ 
-        controls= new THREE.OrbitControls(camera, input_container );
-        controls.target = new THREE.Vector3(0, 2, 0);
-        controls.maxDistance = 500;
-        controls.minDistance = 1;
-        //controls.minPolarAngle = Math.PI / 2.0; // rad
-        //controls.maxPolarAngle = Math.PI / 2.0;
-        controls.noZoom = false;
-        controls.noRotate = false;
-        controls.noPan = false;
-        controls.addEventListener( 'change', update_nexus_frame );
+    function preventDefault_handler(event) {
+        if (event && event.preventDefault)
+            event.preventDefault();
     }
+    input_container.addEventListener( 'touchstart', preventDefault_handler, false );
+    input_container.addEventListener( 'touchend', preventDefault_handler, false );
+    input_container.addEventListener( 'touchmove', preventDefault_handler, false );
+
+    document.addEventListener('touchstart', preventDefault_handler, false);
+    document.addEventListener('touchmove', preventDefault_handler, false);
+
+    controls = new THREE.TrackballControls( camera, input_container );
+    controls.rotateSpeed = 10.0;
+    controls.zoomSpeed = 1.5;
+    controls.panSpeed = 0.8;
+    controls.noZoom = false;
+    controls.noPan = false;
+    controls.staticMoving = true;
+    controls.dynamicDampingFactor = 0.3;
+    controls.keys = [ 65, 83, 68 ];
+    controls.addEventListener( 'change', update_nexus_frame );
 
     // Prepare clock
     var clock = new THREE.Clock();
@@ -617,7 +661,9 @@ var ZipLoaderPool = new ZipLoaderPool();
 
         var size = renderer.getSize();
 
-        var resolution = Math.sqrt( size.width * size.width + size.height + size.height );
+        var mult = DEBUG.bIsMobile ? 4 : 1;
+
+        var resolution = Math.sqrt( size.width * size.width + size.height + size.height ) * mult;
 
         var parameter = radius / resolution;
 

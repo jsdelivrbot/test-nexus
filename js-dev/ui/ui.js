@@ -73,9 +73,16 @@ function createUI(){
 
     addLabelUI(
         uiTable,
-        "Upload size indicator",
-        "ui-gl.upload-indicator",
+        "Upload size",
+        "ui-gl.upload-indicator-bytes",
         "0.00 / 0.00 Mb"
+    );
+
+    addLabelUI(
+        uiTable,
+        "Unzipped objects",
+        "ui-gl.upload-indicator-objects",
+        "0 / 0"
     );
 }
 
@@ -89,13 +96,17 @@ function updateContextInfo(e){
 
 function updateUploadIndicator(e){
     "use strict";
-    var element = document.getElementById("ui-gl.upload-indicator");
+    var element = document.getElementById("ui-gl.upload-indicator-bytes");
     if (element){
-
         var loaded = ( e.loaded / ( 1024 * 1024 ) ).toFixed(2);
         var total = ( e.total / ( 1024 * 1024 ) ).toFixed(2);
-
         element.innerHTML = loaded + " / " + total + " Mb";
+    }
+    element = document.getElementById("ui-gl.upload-indicator-objects");
+    if (element){
+        var created_objects = e.created_objects;
+        var total_objects = e.total_objects;
+        element.innerHTML = created_objects + " / " + total_objects;
     }
 }
 
@@ -142,6 +153,7 @@ function addButtonUI( table , description, id, btn_text, onClickFunction){
     element.setAttribute("id", id);
     element.innerText = btn_text;
     element.onclick = onClickFunction;
+    element.ontouchstart = onClickFunction;
 
     cell2.appendChild(element);
 
@@ -211,4 +223,4 @@ function addRangeUI( table , description, id, values, onChangeFunction){
 
 createUI();
 document.addEventListener('ContextInfo.update', updateContextInfo, false); 
-document.addEventListener('UploadData.update', updateUploadIndicator, false); 
+document.addEventListener('UploadData.update', updateUploadIndicator, false);
