@@ -89,6 +89,9 @@ module.exports = function (grunt) {
                     Map: true,
                     requestAnimationFrame : true,
                     MutationObserver : true,
+                    Blob: true,
+                    Worker: true,
+                    URL: true,
                     // libs
                     jQuery: true,
                     $: true,

@@ -40,6 +40,57 @@ var ZipLoaderPool = function(){
 
     var xhrs_data = {};
 
+    var workerURL_BlobUploader = URL.createObjectURL(new Blob([ '(',
+
+        function () {
+        // WORKER BODY THERE
+
+             var _self;
+            /* jshint ignore:start */
+            _self = eval('self');
+            /* jshint ignore:end */
+           
+            _self.onmessage = function (e) {
+                
+                //console.log("Worker : get a message ");
+
+                if (e.data.msg === "upload_file") {   
+                    
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', e.data.url, true);
+                    xhr.responseType = e.data.responseType;
+
+                    xhr.onprogress = function(event) {
+
+                        _self.postMessage({msg:'upload_file_onprogress', loaded : event.loaded, total : event.total}); 
+                    };
+
+                    xhr.onreadystatechange = function () {
+
+                        if (xhr.readyState==4 && xhr.status==200) {
+
+                            //var fileReader = new FileReader();
+                            //fileReader.onload = function() {
+                            //    var arrayBuffer = this.result;
+                            //    _self.postMessage({msg:'upload_file_done', blob : arrayBuffer}, [arrayBuffer]); 
+                            //    arrayBuffer = null;
+                            //    fileReader = null;
+                            //
+                            //};
+                            //fileReader.readAsArrayBuffer(blob);
+
+                            _self.postMessage({msg:'upload_file_done', blob : xhr.response}); 
+
+                            xhr = null;
+                        }
+                    };
+                    xhr.send();
+                }
+            };
+            }.toString(),
+    ')()' ], { type: 'application/javascript' })
+    );
+
     function dispatch_UploadData_Event(){
 
         var loaded = 0, total = 0;
@@ -77,6 +128,46 @@ var ZipLoaderPool = function(){
 
         _self.load = function(){
 
+            xhrs_data[uuid] = {
+                loaded : 0,
+                total : 0,
+                object_created : false
+            };
+
+
+            var workerThread = new Worker(workerURL_BlobUploader);
+
+            workerThread.onmessage = function (e) {
+
+                if (e.data.msg === "upload_file_onprogress") {  
+
+                    xhrs_data[uuid].loaded = e.data.loaded; // bytes
+                    xhrs_data[uuid].total = e.data.total;
+                    dispatch_UploadData_Event();
+                }
+                else if (e.data.msg === "upload_file_done") {  
+
+                    workerThread.terminate();
+                    workerThread = null;
+
+                    createZipWorker(e.data.blob);
+
+                    // TODO FIX WORKER QUEUE !
+                    //zip_workers_queue.push(blob);
+                    //zip_worker_interval = setInterval( function(){
+                    //    if (zip_workers_queue.length && 
+                    //        zip_workers_ative < zip_workers_max){
+                    //        clearInterval(zip_worker_interval);
+                    //        zip_worker_interval = 0;
+                    //        createZipWorker(zip_workers_queue.shift());
+                    //    }
+                    //}, 15);
+                }
+            }; 
+
+            workerThread.postMessage({ msg: 'upload_file', url : _self.url, responseType : "blob"});
+
+            /* // single thread solution 
             var xhr = new XMLHttpRequest();
             xhr.open('GET', _self.url, true);
             xhr.responseType = "blob";
@@ -106,22 +197,20 @@ var ZipLoaderPool = function(){
                     createZipWorker(blob);
 
                     // TODO FIX WORKER QUEUE !
-
-                    /*zip_workers_queue.push(blob);
-
-                    zip_worker_interval = setInterval( function(){
-                        if (zip_workers_queue.length && 
-                            zip_workers_ative < zip_workers_max){
-                            clearInterval(zip_worker_interval);
-                            zip_worker_interval = 0;
-                            createZipWorker(zip_workers_queue.shift());
-                        }
-                    }, 15);*/
+                    //zip_workers_queue.push(blob);
+                    //zip_worker_interval = setInterval( function(){
+                    //    if (zip_workers_queue.length && 
+                    //        zip_workers_ative < zip_workers_max){
+                    //        clearInterval(zip_worker_interval);
+                    //        zip_worker_interval = 0;
+                    //        createZipWorker(zip_workers_queue.shift());
+                    //    }
+                    //}, 15);
 
                     xhr = null;
                 }
             };
-            xhr.send();
+            xhr.send(); */
         };
 
         _self.onLoad = function(_self){};
@@ -435,13 +524,6 @@ var ZipLoaderPool = new ZipLoaderPool();
         scene.add( new THREE.GridHelper( 35, 35 ) );
     }
 
-    /* An appropriate material can be used as a fourth arg for the NexusObject constructor
-
-    var texture = new THREE.DataTexture( new Uint8Array([1, 1, 1]), 1, 1, THREE.RGBFormat );
-    texture.needsUpdate = true;
-    var material = new THREE.MeshLambertMaterial( { color: 0xffffff, map: texture } );
-    */
-
     function getURLParameter(name) {
         return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(window.location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
     }
@@ -662,7 +744,7 @@ var ZipLoaderPool = new ZipLoaderPool();
         var size = renderer.getSize();
 
         var mult = DEBUG.bIsMobile ? 4 : 1;
-
+ 
         var resolution = Math.sqrt( size.width * size.width + size.height + size.height ) * mult;
 
         var parameter = radius / resolution;
@@ -741,7 +823,7 @@ var ZipLoaderPool = new ZipLoaderPool();
                     }
                     else if (upload_format === "obj"){
 
-                        uploadOBJ(path, model_name);
+                        uploadOBJ(window.location.href + path, model_name);
                     }
                     //else if (upload_format === "crt"){
                     //   if (models[i] === "Digestive.Digestive_exterior.Jejunum")
@@ -757,38 +839,3 @@ var ZipLoaderPool = new ZipLoaderPool();
     };
     xmlhttp.send();
 }());
-
-/*
-    function uploadCrt(path, filename){
-
-        filename = filename + ".crt";
-
-        var loader = new THREE.CORTOLoader({ path: path }); //can pass a material or a multimaterial if you know whats' in the model.
-
-        var decode_times = [];
-        var blob = null;
-
-        loader.load(filename, function(mesh) {
-            decode_times.push(loader.decode_time);
-            blob = loader.blob;
-
-            //mesh.addEventListener("change", render);
-
-            mesh.geometry.computeBoundingBox();
-            if(!mesh.geometry.attributes.normal) {
-                if(!mesh.geometry.attributes.uv) {
-                    mesh.geometry.computeVertexNormals();
-                }
-                //else 
-                //    ambient.intensity = 1.0;
-            }
-
-            //mesh.geometry.center();
-            //mesh.scale.divideScalar(mesh.geometry.boundingBox.getSize().length());
-            scene.add(mesh); 
-
-            //render();
-            //setTimeout(profile, 10);
-        } );
-    }
-    */
