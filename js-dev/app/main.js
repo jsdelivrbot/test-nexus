@@ -807,7 +807,7 @@ var ZipLoaderPool = function(){
 
     var _Queue = [];
     var _Queue_ative = 0;
-    var _Queue_max = 6;
+    var _Queue_ative_max = 5;
 
     var xhrs_data = {};
 
@@ -879,13 +879,37 @@ var ZipLoaderPool = function(){
         document.dispatchEvent(e);
     }
 
+    function _Queue_compare(a, b) {
+        if (a.priority < b.priority){//(a is less than b by some ordering criterion)
+            return -1;
+        }
+        if (a.priority > b.priority){//(a is greater than b by the ordering criterion)
+            return 1;
+        }
+        // a must be equal to b
+        return 0;
+    }
+
+    function checkQueue(){
+
+        if (_Queue_ative < _Queue_ative_max && _Queue.length){
+
+            _Queue.sort(_Queue_compare);
+            _Queue_ative++;
+            _Queue.pop().func();
+        }
+        else{
+            var _empty_vlock_for_check = 0;
+        }
+    }
+
     this.OBJUploader = function(in_path, in_filename, in_lod_param, in_parent_object){
 
         var _self = this;
 
-        _self.filename = in_filename;
-        _self.path = in_path;
-        _self.url = in_path + "/data/" + in_filename + "/" + in_lod_param.toFixed(3) + "/data.zip";
+        var filename = in_filename;
+        var path = in_path;
+        var url = in_path + "/data/" + in_filename + "/" + in_lod_param.toFixed(3) + "/data.zip";
 
         var uuid = generateUUID();
 
@@ -897,34 +921,39 @@ var ZipLoaderPool = function(){
                 object_created : false
             };
 
-            //_Queue.push({
-            //    priority : 0;
-            //    action : "load"
-            //    uuid : uuid,
-            //    filename : in_filename,
-            //    url : url
-            //});
+            _Queue.push({
+                priority : 0,
+                action : "load",
+                uuid : uuid,
+                filename : in_filename,
+                url : url,
+                func : function(){
+                    var workerThread = new Worker(workerURL_BlobUploader);
 
-            var workerThread = new Worker(workerURL_BlobUploader);
+                    workerThread.onmessage = function (e) {
 
-            workerThread.onmessage = function (e) {
+                        if (e.data.msg === "upload_file_onprogress") {  
 
-                if (e.data.msg === "upload_file_onprogress") {  
+                            xhrs_data[uuid].loaded = e.data.loaded; // bytes
+                            xhrs_data[uuid].total = e.data.total;
+                            dispatch_UploadData_Event();
+                        }
+                        else if (e.data.msg === "upload_file_done") {  
 
-                    xhrs_data[uuid].loaded = e.data.loaded; // bytes
-                    xhrs_data[uuid].total = e.data.total;
-                    dispatch_UploadData_Event();
+                            workerThread.terminate();
+                            workerThread = null;
+
+                            _Queue_ative--;
+
+                            _self.createZipWorker(e.data.blob);
+
+                            checkQueue();
+                        }
+                    }; 
+                    workerThread.postMessage({ msg: 'upload_file', url : url, responseType : "blob"});
                 }
-                else if (e.data.msg === "upload_file_done") {  
-
-                    workerThread.terminate();
-                    workerThread = null;
-
-                    createZipWorker(e.data.blob);
-                }
-            }; 
-
-            workerThread.postMessage({ msg: 'upload_file', url : _self.url, responseType : "blob"});
+            });
+            checkQueue();
         };
 
         _self.onLoad = function(_self){};
@@ -961,7 +990,7 @@ var ZipLoaderPool = function(){
                     if (!in_parent_object.shared_materials){
 
                         var mtlLoader = new THREE.MTLLoader();
-                        mtlLoader.setTexturePath( _self.path + "/resources/");
+                        mtlLoader.setTexturePath( path + "/resources/");
                         var materials = mtlLoader.parse( mtl_file );
 
                         change_image_ref_to_png(materials.materialsInfo);
@@ -972,7 +1001,7 @@ var ZipLoaderPool = function(){
 
                     var objLoader = new THREE.OBJWorkerLoader();
                     objLoader.setMaterials( in_parent_object.shared_materials );
-                    objLoader.setPath( _self.path );
+                    objLoader.setPath( path );
 
                     var workerThread_ParseOBJ = new Worker(workerURL_OBJCreator);
 
@@ -1018,7 +1047,7 @@ var ZipLoaderPool = function(){
             }
         }
 
-        function createZipWorker(blob){
+        _self.createZipWorker  = function(blob){
 
             // zip_workers_ative++;
 
@@ -1068,7 +1097,7 @@ var ZipLoaderPool = function(){
                 },
                 function(error) {}  // onerror callback
             );
-        }
+        };
 
         function change_image_ref_to_png(mat_info_collection){
             var bDisableBumpMapping = true;
