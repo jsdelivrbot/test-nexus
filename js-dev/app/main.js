@@ -39,9 +39,12 @@ THREE.OBJWorkerLoader = function ( manager ) {
     "use strict";
 
     var _self = this;
+    var bInThread = false;
     /* jshint ignore:start */
-    if (!_self)
+    if (!_self){
+        bInThread = true;
         _self = eval('self');
+    }
     /* jshint ignore:end */
 
     _self.materials = null;
@@ -754,42 +757,45 @@ THREE.OBJWorkerLoader = function ( manager ) {
         return container;
     };
 
-    _self.onmessage = function (event) {
+    if (bInThread){
 
-        if (event.data.msg === "parse_file") {   
+        _self.onmessage = function (event) {
 
-            var state = _self.getState( event.data.obj_file );
+            if (event.data.msg === "parse_file") {   
 
-            var simple_state = {};
+                var state = _self.getState( event.data.obj_file );
 
-            simple_state.objects = state.objects;
-            simple_state.materialLibraries = state.materialLibraries;
+                var simple_state = {};
 
-            state = null;
+                simple_state.objects = state.objects;
+                simple_state.materialLibraries = state.materialLibraries;
 
-            for ( var i = 0; i < simple_state.objects.length; i ++ ) {
+                state = null;
 
-                var object = simple_state.objects[ i ];
-                delete object.currentMaterial;
-                delete object.startMaterial;
-                delete object._finalize;
-                
-                delete object.materials.startMaterial;
-                delete object.materials._finalize;
+                for ( var i = 0; i < simple_state.objects.length; i ++ ) {
 
-                for (var j = 0 ; j < object.materials.length; j++){
+                    var object = simple_state.objects[ i ];
+                    delete object.currentMaterial;
+                    delete object.startMaterial;
+                    delete object._finalize;
+                    
+                    delete object.materials.startMaterial;
+                    delete object.materials._finalize;
 
-                    var material = object.materials[j];
+                    for (var j = 0 ; j < object.materials.length; j++){
 
-                    delete material.clone;
+                        var material = object.materials[j];
+
+                        delete material.clone;
+                    }
+
+                    object = null;
                 }
 
-                object = null;
+                _self.postMessage({msg:'parse_file_done', state : simple_state}); 
             }
-
-            _self.postMessage({msg:'parse_file_done', state : simple_state}); 
-        }
-    };
+        };
+    }
 };
 
 
@@ -799,18 +805,13 @@ var ZipLoaderPool = function(){
 
     /* global zip */
 
-    var zip_workers_queue = [];
-    var zip_workers_ative = 0;
-    var zip_workers_max = 6;
+    var _Queue = [];
+    var _Queue_ative = 0;
+    var _Queue_max = 6;
 
     var xhrs_data = {};
 
-    var workerURL_OBJCreator = URL.createObjectURL(new Blob([ '(',
-
-        THREE.OBJWorkerLoader.toString(),
-        
-        ')()' ], { type: 'application/javascript' })
-    );
+    var workerURL_OBJCreator = URL.createObjectURL(new Blob([ '(', THREE.OBJWorkerLoader.toString(), ')()' ], { type: 'application/javascript' }) );
 
     var workerURL_BlobUploader = URL.createObjectURL(new Blob([ '(',
 
@@ -840,16 +841,6 @@ var ZipLoaderPool = function(){
                     xhr.onreadystatechange = function () {
 
                         if (xhr.readyState==4 && xhr.status==200) {
-
-                            //var fileReader = new FileReader();
-                            //fileReader.onload = function() {
-                            //    var arrayBuffer = this.result;
-                            //    _self.postMessage({msg:'upload_file_done', blob : arrayBuffer}, [arrayBuffer]); 
-                            //    arrayBuffer = null;
-                            //    fileReader = null;
-                            //
-                            //};
-                            //fileReader.readAsArrayBuffer(blob);
 
                             _self.postMessage({msg:'upload_file_done', blob : xhr.response}); 
 
@@ -906,6 +897,14 @@ var ZipLoaderPool = function(){
                 object_created : false
             };
 
+            //_Queue.push({
+            //    priority : 0;
+            //    action : "load"
+            //    uuid : uuid,
+            //    filename : in_filename,
+            //    url : url
+            //});
+
             var workerThread = new Worker(workerURL_BlobUploader);
 
             workerThread.onmessage = function (e) {
@@ -922,17 +921,6 @@ var ZipLoaderPool = function(){
                     workerThread = null;
 
                     createZipWorker(e.data.blob);
-
-                    // TODO FIX WORKER QUEUE !
-                    //zip_workers_queue.push(blob);
-                    //zip_worker_interval = setInterval( function(){
-                    //    if (zip_workers_queue.length && 
-                    //        zip_workers_ative < zip_workers_max){
-                    //        clearInterval(zip_worker_interval);
-                    //        zip_worker_interval = 0;
-                    //        createZipWorker(zip_workers_queue.shift());
-                    //    }
-                    //}, 15);
                 }
             }; 
 
@@ -964,7 +952,7 @@ var ZipLoaderPool = function(){
 
                 if (zip_reader){
                     zip_reader.close(function() { }); // onclose callback
-                    zip_workers_ative--;
+                    // zip_workers_ative--;
                     zip_reader = null;
                 }
 
@@ -1032,7 +1020,7 @@ var ZipLoaderPool = function(){
 
         function createZipWorker(blob){
 
-            zip_workers_ative++;
+            // zip_workers_ative++;
 
             zip.createReader(
                 new zip.BlobReader(blob),
@@ -1070,7 +1058,7 @@ var ZipLoaderPool = function(){
                             if (zip_reader_count < 2){
                                 reader.close(function() { }); // onclose callback
                                 zip_reader = null;
-                                zip_workers_ative--;
+                                // zip_workers_ative--;
                             }
 
                             if (zip_reader_count > 2)
