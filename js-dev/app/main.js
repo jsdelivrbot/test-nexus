@@ -812,7 +812,7 @@ var ZipLoaderPool = function(){
     var _Queue_ative_max = 5;
 
     var xhrs_data = {};
-
+    
     var workerURL_OBJCreator = URL.createObjectURL(new Blob([ '(', THREE.OBJWorkerLoader.toString(), ')()' ], { type: 'application/javascript' }) );
 
     var workerURL_BlobUploader = URL.createObjectURL(new Blob([ '(',
@@ -858,22 +858,30 @@ var ZipLoaderPool = function(){
 
     function dispatch_UploadData_Event(){
 
-        var loaded = 0, total = 0;
+        var loaded = 0, total = 0, upload_speed = 0;
         var created_objects = 0, total_objects = 0;
 
         for (var _uuid in xhrs_data){
             if (xhrs_data[_uuid]){
-                loaded += xhrs_data[_uuid].loaded;
-                total += xhrs_data[_uuid].total;
+                var _xhrs = xhrs_data[_uuid];
 
-                if (xhrs_data[_uuid].object_created)
+                loaded += _xhrs.loaded;
+                total += _xhrs.total;
+
+                if (_xhrs.object_created)
                     created_objects++;
+
+                if (_xhrs.upload_speed !== undefined && _xhrs.upload_speed !== null)
+                    upload_speed += _xhrs.upload_speed;
+
                 total_objects++;
             }
         }
+        upload_speed = upload_speed / total_objects;
 
         var e = document.createEvent('Event');
         e.initEvent("UploadData.update", true, true);
+        e.upload_speed = upload_speed;
         e.loaded = loaded;
         e.total = total;
         e.created_objects = created_objects;
@@ -934,16 +942,31 @@ var ZipLoaderPool = function(){
 
                     workerThread.onmessage = function (e) {
 
-                        if (e.data.msg === "upload_file_onprogress") {  
+                        var _xhrs = xhrs_data[uuid];
 
-                            xhrs_data[uuid].loaded = e.data.loaded; // bytes
-                            xhrs_data[uuid].total = e.data.total;
+                        if (e.data.msg === "upload_file_onprogress") {
+
+                            var loaded = e.data.loaded;
+                            var total = e.data.total;
+
+                            if (!_xhrs.start_time){
+                                _xhrs.start_time = new Date().getTime();
+                            }
+
+                            _xhrs.loaded = loaded; // bytes
+                            _xhrs.total = total;
+
                             dispatch_UploadData_Event();
                         }
                         else if (e.data.msg === "upload_file_done") {  
 
                             workerThread.terminate();
                             workerThread = null;
+
+                            var time = new Date().getTime();
+                            if (_xhrs.start_time && (time - _xhrs.start_time) > 10){
+                                _xhrs.upload_speed = ( _xhrs.total / ( ( time - _xhrs.start_time ) / 1000) );
+                            }
 
                             _Queue_ative--;
 

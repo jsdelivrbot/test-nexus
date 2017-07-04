@@ -138,7 +138,8 @@ function updateUploadIndicator(e){
     if (element){
         var loaded = ( e.loaded / ( 1024 * 1024 ) ).toFixed(2);
         var total = ( e.total / ( 1024 * 1024 ) ).toFixed(2);
-        element.innerHTML = loaded + " / " + total + " Mb";
+        var upload_speed = ( e.upload_speed / ( 1024 * 1024 ) ).toFixed(2);
+        element.innerHTML = loaded + " / " + total + " Mb | " + upload_speed + " Mb/sec" ;
     }
     element = document.getElementById("ui-gl.upload-indicator-objects");
     if (element){

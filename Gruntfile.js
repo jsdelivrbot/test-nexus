@@ -108,4 +108,5 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('default', [ 'concat', 'jshint', "copy", "uglify"]);
+    grunt.registerTask('dev', [ 'concat', 'jshint', "copy"]);
 };
