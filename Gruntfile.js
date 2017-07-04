@@ -31,20 +31,11 @@ module.exports = function (grunt) {
         uglify: {
             app: {
                 options: {
-                    banner: '// <%= grunt.template.today("dd.mm.yyyy") %> by <%= pkg.author %>\n'//,
-                    //sourceMap: true
+                    banner: '// <%= grunt.template.today("dd.mm.yyyy") %> by <%= pkg.author %>\n'
                 },
                 src: '<%= concat.app.dest %>',
-                dest: '<%= concat.app.dest %>'//,
-            }//,
-            //libs: {
-            //    options: {
-            //        banner: '// <%= grunt.template.today("dd.mm.yyyy") %> external libraries\n',
-            //        //sourceMap: true
-            //    },
-            //    src: '<%= concat.libs.dest %>',
-            //    dest: '<%= concat.libs.dest %>'
-            //}
+                dest: '<%= concat.app.dest %>'
+            }
         },
         jshint: {
             options: {
@@ -105,7 +96,7 @@ module.exports = function (grunt) {
                 reporter: require('jshint-stylish')
             },
             files: [
-                '<%= concat.app.dest %>',
+                '<%= concat.app.dest %>'
             ]
         },
         copy: {
@@ -114,20 +105,8 @@ module.exports = function (grunt) {
                   { expand: true, flatten: true, src: ['js-dev/zip-lib/*'], dest: 'public/zip-lib/' }
                 ]
             }
-        },
-        file_append: {
-            default_options: {
-              files: [
-                {
-                  append: "OCC.GlobalConfigurator._debug=false;",
-                  input: '<%= concat.app.dest %>',
-                  output: '<%= concat.app.dest %>'
-                }
-              ]
-            }
-          }
+        }
     });
 
     grunt.registerTask('default', [ 'concat', 'jshint', "copy", "uglify"]);
-    //grunt.registerTask('dev', [ 'concat', 'jshint', "copy"]);
 };
