@@ -1,21 +1,21 @@
 {
-  "name": "node-js-getting-started",
-  "version": "0.2.6",
-  "description": "A sample Node.js app using Express 4",
+  "name": "vida.web",
+  "version": "0.03.proto",
+  "description": "vida.web demo",
   "engines": {
-    "node": "6.10.2"
+    "node": "*"
   },
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "ejs": "2.5.6",
-    "express": "4.15.2"
+    "ejs": "*",
+    "express": "*"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heroku/node-js-getting-started"
+    "url": ""
   },
   "keywords": [
     "node",
