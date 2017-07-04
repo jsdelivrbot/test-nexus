@@ -1,36 +1,26 @@
 {
-  "name": "VIDA.WEB",
-  "version": "0.03.proto",
-  "description": "Demo app for VIDA",
+  "name": "node-js-getting-started",
+  "version": "0.2.6",
+  "description": "A sample Node.js app using Express 4",
   "engines": {
-    "node": "*"
+    "node": "6.10.2"
   },
   "main": "index.js",
   "scripts": {
-    "postinstall": "grunt",
     "start": "node index.js"
   },
   "dependencies": {
-    "ejs": "*",
-    "express": "*",
-    "grunt": "*",
-    "grunt-contrib-concat": "*",
-    "grunt-contrib-copy": "*",
-    "grunt-contrib-jshint": "*",
-    "grunt-contrib-uglify": "*",
-    "grunt-file-append": "*",
-    "jshint-stylish": "*"
+    "ejs": "2.5.6",
+    "express": "4.15.2"
   },
   "repository": {
     "type": "git",
-    "url" : "https://github.com/keletskiy/test-nexus"
+    "url": "https://github.com/heroku/node-js-getting-started"
   },
   "keywords": [
     "node",
     "heroku",
     "express"
   ],
-  "license": "MIT",
-  "author ": "Eletskiy Konstantin"
+  "license": "MIT"
 }
-
