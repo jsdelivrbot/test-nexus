@@ -25,7 +25,9 @@ var available_lods = [0.1, 0.2, 0.3, 0.5];
 var DEBUG = {
     bUseMaxLod : false,
     bUseWireframe : false,
-    bIsMobile : detectmob()
+    bIsMobile : detectmob(),
+    bIsLightsVisible : true,
+    bDisableBumpMapping : false
 };
 
 /**
@@ -1100,7 +1102,7 @@ var ZipLoaderPool = function(){
         };
 
         function change_image_ref_to_png(mat_info_collection){
-            var bDisableBumpMapping = true;
+            var bDisableBumpMapping = DEBUG.bDisableBumpMapping;
             for ( var mat_info_prop in mat_info_collection ) {
                 if (!mat_info_collection.hasOwnProperty(mat_info_prop))
                     continue;
@@ -1121,8 +1123,9 @@ var ZipLoaderPool = function(){
                             if (bDisableBumpMapping){
                                 delete mat_info[prop];
                             }
-                            else
+                            else{
                                 mat_info[ prop ] = value.replace(/\.[^/.]+$/, "") + ".png";
+                            }
                             break;
                         default:
                             break;
@@ -1244,23 +1247,47 @@ function main(){
         if (event && event.preventDefault)
             event.preventDefault();
     }
-    input_container.addEventListener( 'touchstart', preventDefault_handler, false );
-    input_container.addEventListener( 'touchend', preventDefault_handler, false );
-    input_container.addEventListener( 'touchmove', preventDefault_handler, false );
 
-    document.addEventListener('touchstart', preventDefault_handler, false);
-    document.addEventListener('touchmove', preventDefault_handler, false);
+    //--------------TrackballControls
+    //input_container.addEventListener( 'touchstart', preventDefault_handler, false );
+    //input_container.addEventListener( 'touchend', preventDefault_handler, false );
+    //input_container.addEventListener( 'touchmove', preventDefault_handler, false );
+    //document.addEventListener('touchstart', preventDefault_handler, false);
+    //document.addEventListener('touchmove', preventDefault_handler, false);
 
-    controls = new THREE.TrackballControls( camera, input_container );
-    controls.rotateSpeed = 10.0;
+    //controls = new THREE.TrackballControls( camera, input_container );
+    //controls.rotateSpeed = 10.0;
+    //controls.zoomSpeed = 1.5;
+    //controls.panSpeed = 0.8;
+    //controls.noZoom = false;
+    //controls.noPan = false;
+    //controls.staticMoving = true;
+    //controls.dynamicDampingFactor = 0.3;
+    //controls.keys = [ 65, 83, 68 ];
+    //controls.addEventListener( 'change', trackballControlsChanged );
+    //--------------
+
+    controls = new THREE.OrbitControls(camera, input_container);
+    camera.position.set(0, 3, 27);
+    controls.target = new THREE.Vector3(0, 1, 0);
+    //controls.maxDistance = 170;
+    //controls.minDistance = 110;
+    controls.twoFingerPan = true;
+    controls.twoFingerPanThreshold = 5;
+    controls.rotateSpeed = 2.0;
     controls.zoomSpeed = 1.5;
-    controls.panSpeed = 0.8;
+    controls.panSpeed = 0.7;
+    controls.minPolarAngle = -Math.PI; // rad
+    controls.maxPolarAngle = Math.PI;  
     controls.noZoom = false;
+    controls.noRotate = false;
     controls.noPan = false;
-    controls.staticMoving = true;
-    controls.dynamicDampingFactor = 0.3;
-    controls.keys = [ 65, 83, 68 ];
-    controls.addEventListener( 'change', update_nexus_frame );
+    controls.addEventListener( 'change', trackballControlsChanged );
+
+    function trackballControlsChanged(){
+        //camera.rotation.z = 0; 
+        update_nexus_frame();
+    }
 
     // Prepare clock
     var clock = new THREE.Clock();
@@ -1305,8 +1332,14 @@ function main(){
         if (stats)
             stats.update();
 
-        if (controls)
+        if (controls){
             controls.update(delta);
+            //camera.rotation.z = 0;
+        }
+
+        // lights
+        light1.visible = DEBUG.bIsLightsVisible;
+        light2.visible = DEBUG.bIsLightsVisible;
 
         Nexus.debug_draw_wirefame = DEBUG.bUseWireframe;
 

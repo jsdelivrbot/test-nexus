@@ -175,6 +175,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 				axis.crossVectors( moveDirection, _eye ).normalize();
 
+                //var axis = new THREE.Vector3( 1, 0, 0 ), quaternion = new THREE.Quaternion();
+
 				angle *= _this.rotateSpeed;
 				quaternion.setFromAxisAngle( axis, angle );
 
@@ -481,29 +483,33 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	function touchstart( event ) {
 
+        // VIDA_CHANGE_BEGIN -> added Math.floor
+
 		if ( _this.enabled === false ) return;
 
 		switch ( event.touches.length ) {
 
 			case 1:
 				_state = STATE.TOUCH_ROTATE;
-				_moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				_moveCurr.copy( getMouseOnCircle( Math.floor(event.touches[ 0 ].pageX), Math.floor(event.touches[ 0 ].pageY) ) );
 				_movePrev.copy( _moveCurr );
 				break;
 
 			default: // 2 or more
 				_state = STATE.TOUCH_ZOOM_PAN;
-				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+				var dx = Math.floor(event.touches[ 0 ].pageX) - Math.floor(event.touches[ 1 ].pageX);
+				var dy = Math.floor(event.touches[ 0 ].pageY) - Math.floor(event.touches[ 1 ].pageY);
 				_touchZoomDistanceEnd = _touchZoomDistanceStart = Math.sqrt( dx * dx + dy * dy );
 
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				var x = ( Math.floor(event.touches[ 0 ].pageX) + Math.floor(event.touches[ 1 ].pageX) ) / 2;
+				var y = ( Math.floor(event.touches[ 0 ].pageY) + Math.floor(event.touches[ 1 ].pageY) ) / 2;
 				_panStart.copy( getMouseOnScreen( x, y ) );
 				_panEnd.copy( _panStart );
 				break;
 
 		}
+
+        // VIDA_CHANGE_END
 
 		_this.dispatchEvent( startEvent );
 
@@ -511,32 +517,38 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	function touchmove( event ) {
 
+        // VIDA_CHANGE_BEGIN -> added Math.floor
+
 		if ( _this.enabled === false ) return;
 
 		switch ( event.touches.length ) {
 
 			case 1:
 				_movePrev.copy( _moveCurr );
-				_moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				_moveCurr.copy( getMouseOnCircle( Math.floor(event.touches[ 0 ].pageX), Math.floor(event.touches[ 0 ].pageY) ) );
 				break;
 
 			default: // 2 or more
-				var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-				var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
+				var dx = Math.floor(event.touches[ 0 ].pageX) - Math.floor(event.touches[ 1 ].pageX);
+				var dy = Math.floor(event.touches[ 0 ].pageY) - Math.floor(event.touches[ 1 ].pageY);
 				_touchZoomDistanceEnd = Math.sqrt( dx * dx + dy * dy );
 
-				var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+				var x = ( Math.floor(event.touches[ 0 ].pageX) + Math.floor(event.touches[ 1 ].pageX) ) / 2;
+				var y = ( Math.floor(event.touches[ 0 ].pageY) + Math.floor(event.touches[ 1 ].pageY) ) / 2;
 				_panEnd.copy( getMouseOnScreen( x, y ) );
 				break;
 
 		}
+
+         // VIDA_CHANGE_END
 
 	}
 
 	function touchend( event ) {
 
 		if ( _this.enabled === false ) return;
+
+        // VIDA_CHANGE_BEGIN -> added Math.floor
 
 		switch ( event.touches.length ) {
 
@@ -546,11 +558,13 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 			case 1:
 				_state = STATE.TOUCH_ROTATE;
-				_moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+				_moveCurr.copy( getMouseOnCircle( Math.floor(event.touches[ 0 ].pageX), Math.floor(event.touches[ 0 ].pageY) ) );
 				_movePrev.copy( _moveCurr );
 				break;
 
 		}
+
+        // VIDA_CHANGE_END
 
 		_this.dispatchEvent( endEvent );
 

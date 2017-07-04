@@ -1,7 +1,7 @@
 {
    "name": "VIDA.WEB",
-   "description": "Test app for VIDA",
-   "repository": "https://github.com/keletskiy/test-nexus",
+   "description": "Demo app for VIDA",
+   "repository": "https://enter-your-repo-there.com",
    "logo": "",
    "keywords": ["node", "express", "heroku"],
    "image": ""

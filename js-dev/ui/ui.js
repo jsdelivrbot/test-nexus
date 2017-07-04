@@ -24,6 +24,33 @@ function createUI(){
     if (!uiDiv)
         return;
 
+    var uiShowHideBtn = document.getElementById("ui-show-hide-btn");
+    if (uiShowHideBtn){
+        document.getElementById("ui-show-hide-btn").remove();
+    }
+
+    uiShowHideBtn = document.createElement("button");
+    uiShowHideBtn.setAttribute("id", "ui-show-hide-btn");
+    uiShowHideBtn.innerText = 'Hide parameters';
+    uiShowHideBtn.onclick = function(){
+        var uiTable = document.getElementById("ui-table");
+        if (uiTable){
+            if (uiTable.style.visibility === "visible")
+            {
+                uiTable.style.visibility = "hidden";
+                uiTable.style.display = "none";
+                uiShowHideBtn.innerText = 'Show parameters';
+            }
+            else 
+            {
+                uiTable.style.visibility = "visible";
+                uiTable.style.display = "";
+                uiShowHideBtn.innerText = 'Hide parameters';
+            }
+        }
+    };
+    uiDiv.appendChild(uiShowHideBtn);
+
     var uiTable = document.getElementById("ui-table");
     if (uiTable){
         document.getElementById("ui-table").remove();
@@ -47,6 +74,17 @@ function createUI(){
         "Face count",
         "ui-gl.draw-face.count",
         0
+    );
+
+    addButtonUI(
+        uiTable,
+        "Light",
+        "ui-gl.ligths",
+        (DEBUG.bIsLightsVisible ? "Disable" : "Enable"),
+        function(){
+            DEBUG.bIsLightsVisible = !DEBUG.bIsLightsVisible;
+            document.getElementById("ui-gl.ligths").innerText = DEBUG.bIsLightsVisible ? "Disable" : "Enable";
+        }
     );
 
     addButtonUI(
