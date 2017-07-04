@@ -1,6 +1,6 @@
 {
   "name": "VIDA.WEB",
-  "version": "0.03.proto",
+  "version": "0.01.proto",
   "description": "TEST app for VIDA",
   "engines": {
     "node": "*"
@@ -22,8 +22,8 @@
     "jshint-stylish": "*"
   },
   "repository": {
-    "url" : "https:/github.com/keletskiy/test-nexus",
-    "type": "git"
+    "type": "git",
+    "url" : "https://github.com/keletskiy/test-nexus"
   },
   "keywords": [ "node", "heroku", "express"],
   "license": "MIT",
