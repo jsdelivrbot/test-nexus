@@ -22,7 +22,7 @@
     "jshint-stylish": "*"
   },
   "repository": {
-    "url" : "https://github.com/keletskiy/test-nexus",
+    "url" : "https:/github.com/keletskiy/test-nexus",
     "type": "git"
   },
   "keywords": [ "node", "heroku", "express"],
