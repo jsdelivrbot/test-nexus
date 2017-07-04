@@ -36,15 +36,7 @@ module.exports = function (grunt) {
                 },
                 src: '<%= concat.app.dest %>',
                 dest: '<%= concat.app.dest %>',
-            }//,
-            //libs: {
-            //    options: {
-            //        banner: '// <%= grunt.template.today("dd.mm.yyyy") %> external libraries\n',
-            //        //sourceMap: true
-            //    },
-            //    src: '<%= concat.libs.dest %>',
-            //    dest: '<%= concat.libs.dest %>'
-            //}
+            }
         },
         jshint: {
             options: {
@@ -129,5 +121,4 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('default', [ 'concat', 'jshint', "copy", "uglify"]);
-    grunt.registerTask('dev', [ 'concat', 'jshint', "copy"]);
 };
