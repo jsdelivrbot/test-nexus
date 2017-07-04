@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Test app for VIDA",
   "engines": {
-    "node": "6.10.2"
+    "node": "x.x.x"
   },
   "main": "index.js",
   "scripts": {
@@ -13,12 +13,12 @@
     "ejs": "x.x.x",
     "express": "x.x.x",
     "grunt": "x.x.x",
-    "grunt-closure-compiler": "0.0.21",
-    "grunt-contrib-concat": "^0.5.0",
-    "grunt-contrib-copy": "^0.7.0",
-    "grunt-contrib-jshint": "^0.10.0",
-    "grunt-contrib-uglify": "^0.6.0",
-    "jshint-stylish": "^1.0.0"
+    "grunt-closure-compiler": "x.x.x",
+    "grunt-contrib-concat": "x.x.x",
+    "grunt-contrib-copy": "x.x.x",
+    "grunt-contrib-jshint": "x.x.x",
+    "grunt-contrib-uglify": "x.x.x",
+    "jshint-stylish": "x.x.x"
   },
   "repository": {
     "type": "git",
