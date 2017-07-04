@@ -31,11 +31,11 @@ module.exports = function (grunt) {
         uglify: {
             app: {
                 options: {
-                    banner: '// <%= grunt.template.today("dd.mm.yyyy") %> by <%= pkg.author %>\n',
+                    banner: '// <%= grunt.template.today("dd.mm.yyyy") %> by <%= pkg.author %>\n'//,
                     //sourceMap: true
                 },
                 src: '<%= concat.app.dest %>',
-                dest: '<%= concat.app.dest %>',
+                dest: '<%= concat.app.dest %>'//,
             }//,
             //libs: {
             //    options: {
@@ -128,6 +128,6 @@ module.exports = function (grunt) {
           }
     });
 
-    grunt.registerTask('default', [ 'concat', 'jshint', "copy"]);//, "uglify"]);
+    grunt.registerTask('default', [ 'concat', 'jshint', "copy", "uglify"]);
     //grunt.registerTask('dev', [ 'concat', 'jshint', "copy"]);
 };

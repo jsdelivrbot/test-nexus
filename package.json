@@ -27,5 +27,5 @@
   },
   "keywords": [ "node", "heroku", "express"],
   "license": "MIT",
-  "author":"Eletskiy Konstantin"
+  "author ": "Eletskiy Konstantin"
 }
