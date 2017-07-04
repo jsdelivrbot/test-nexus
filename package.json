@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://enter-your-repo-there.com"
+    "url": "https://github.com/keletskiy/test-nexus"
   },
   "keywords": [ "node", "heroku", "express"],
   "license": "MIT",
