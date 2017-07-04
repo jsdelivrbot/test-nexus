@@ -1,7 +1,7 @@
 {
   "name": "VIDA.WEB",
-  "version": "0.1",
-  "description": "A sample Node.js app using Express 4",
+  "version": "0.03.proto",
+  "description": "Demo app for VIDA",
   "engines": {
     "node": "*"
   },
@@ -12,7 +12,14 @@
   },
   "dependencies": {
     "ejs": "*",
-    "express": "*"
+    "express": "*",
+    "grunt": "*",
+    "grunt-contrib-concat": "*",
+    "grunt-contrib-copy": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-file-append": "*",
+    "jshint-stylish": "*"
   },
   "repository": {
     "type": "git",
