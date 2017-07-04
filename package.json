@@ -12,14 +12,7 @@
   },
   "dependencies": {
     "ejs": "*",
-    "express": "*",
-    "grunt": "*",
-    "grunt-contrib-concat": "*",
-    "grunt-contrib-copy": "*",
-    "grunt-contrib-jshint": "*",
-    "grunt-contrib-uglify": "*",
-    "grunt-file-append": "*",
-    "jshint-stylish": "*"
+    "express": "*"
   },
   "repository": {
     "type": "git",
