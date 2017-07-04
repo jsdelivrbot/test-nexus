@@ -1,7 +1,7 @@
 {
   "name": "VIDA.WEB",
-  "version": "0.01.proto",
-  "description": "TEST app for VIDA",
+  "version": "0.1",
+  "description": "A sample Node.js app using Express 4",
   "engines": {
     "node": "*"
   },
@@ -25,7 +25,12 @@
     "type": "git",
     "url" : "https://github.com/keletskiy/test-nexus"
   },
-  "keywords": [ "node", "heroku", "express"],
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
   "license": "MIT",
   "author ": "Eletskiy Konstantin"
 }
+
