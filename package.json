@@ -22,8 +22,8 @@
     "jshint-stylish": "*"
   },
   "repository": {
-    "type": "git",
-    "url" : "https://github.com/keletskiy/test-nexus"
+    "url" : "https://github.com/keletskiy/test-nexus",
+    "type": "git"
   },
   "keywords": [ "node", "heroku", "express"],
   "license": "MIT",
