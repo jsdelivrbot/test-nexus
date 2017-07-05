@@ -28,7 +28,8 @@ var DEBUG = {
     bIsMobile : detectmob(),
     bIsLightsVisible : true,
     bDisableBumpMapping : false,
-    bAutoRotateCamera : true
+    bAutoRotateCamera : true,
+    bSetCameraInitailState : false
 };
 
 /**
@@ -1395,6 +1396,13 @@ function main(){
         var delta = clock.getDelta();
 
         requestAnimationFrame( animate );
+
+        if (DEBUG.bSetCameraInitailState){
+            camera.position.set(0, 3, 27);
+            camera.lookAt(new THREE.Vector3(0,2,0));
+            controls.target = new THREE.Vector3(0, 1, 0);
+            DEBUG.bSetCameraInitailState = false;
+        }
 
         controls.autoRotate = DEBUG.bAutoRotateCamera;
 

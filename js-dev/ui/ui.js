@@ -120,6 +120,16 @@ function createUI(){
         }
     );
 
+    addButtonUI(
+        uiTable,
+        "Set camera initial state",
+        "ui-gl.initial-state-camera",
+        "press",
+        function(){
+            DEBUG.bSetCameraInitailState = true;
+        }
+    );
+
     addLabelUI(
         uiTable,
         "Upload size",
