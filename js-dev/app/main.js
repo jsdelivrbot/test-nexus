@@ -27,7 +27,8 @@ var DEBUG = {
     bUseWireframe : false,
     bIsMobile : detectmob(),
     bIsLightsVisible : true,
-    bDisableBumpMapping : false
+    bDisableBumpMapping : false,
+    bAutoRotateCamera : true
 };
 
 /**
@@ -1346,10 +1347,12 @@ function main(){
     controls.noZoom = false;
     controls.noRotate = false;
     controls.noPan = false;
-    controls.addEventListener( 'change', trackballControlsChanged );
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 13.0;
+    controls.update();
+    controls.addEventListener( 'change', controlsInputChanged );
 
-    function trackballControlsChanged(){
-        //camera.rotation.z = 0; 
+    function controlsInputChanged(){
         update_nexus_frame();
     }
 
@@ -1393,12 +1396,13 @@ function main(){
 
         requestAnimationFrame( animate );
 
+        controls.autoRotate = DEBUG.bAutoRotateCamera;
+
         if (stats)
             stats.update();
 
         if (controls){
-            controls.update(delta);
-            //camera.rotation.z = 0;
+            controls.update();
         }
 
         // lights

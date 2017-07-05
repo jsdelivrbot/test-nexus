@@ -109,6 +109,17 @@ function createUI(){
         }
     );
 
+    addButtonUI(
+        uiTable,
+        "Autorotate camera",
+        "ui-gl.autorotate-camera",
+        DEBUG.bAutoRotateCamera,
+        function(){
+            DEBUG.bAutoRotateCamera = !DEBUG.bAutoRotateCamera;
+            document.getElementById("ui-gl.autorotate-camera").innerText = DEBUG.bAutoRotateCamera;
+        }
+    );
+
     addLabelUI(
         uiTable,
         "Upload size",
