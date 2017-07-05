@@ -809,75 +809,66 @@ var ZipLoaderPool = function(){
 
     var _Queue = [];
     var _Queue_ative = 0;
-    var _Queue_ative_max = 5;
+    var _Queue_ative_max = DEBUG.bIsMobile ? 5 : 7;
 
     var xhrs_data = {};
     
     var workerURL_OBJCreator = URL.createObjectURL(new Blob([ '(', THREE.OBJWorkerLoader.toString(), ')()' ], { type: 'application/javascript' }) );
 
     var workerURL_BlobUploader = URL.createObjectURL(new Blob([ '(',
-
         function () {
-        // WORKER BODY THERE
 
              var _self;
+            
             /* jshint ignore:start */
             _self = eval('self');
             /* jshint ignore:end */
-           
+            
             _self.onmessage = function (e) {
-                
-                //console.log("Worker : get a message ");
+                if (e.data.msg === "upload_file") {
 
-                if (e.data.msg === "upload_file") {   
-                    
                     var xhr = new XMLHttpRequest();
                     xhr.open('GET', e.data.url, true);
                     xhr.responseType = e.data.responseType;
 
                     xhr.onprogress = function(event) {
-
                         _self.postMessage({msg:'upload_file_onprogress', loaded : event.loaded, total : event.total}); 
                     };
 
                     xhr.onreadystatechange = function () {
-
                         if (xhr.readyState==4 && xhr.status==200) {
-
                             _self.postMessage({msg:'upload_file_done', blob : xhr.response}); 
-
                             xhr = null;
                         }
                     };
+
                     xhr.send();
                 }
             };
-            }.toString(),
-    ')()' ], { type: 'application/javascript' })
+        }.toString(),
+        ')()' ], { type: 'application/javascript' })
     );
 
     function dispatch_UploadData_Event(){
 
-        var loaded = 0, total = 0, upload_speed = 0;
-        var created_objects = 0, total_objects = 0;
+        var loaded = 0, total = 0, upload_speed = 0, upload_speed_counter = 0, created_objects = 0, total_objects = 0;
 
         for (var _uuid in xhrs_data){
             if (xhrs_data[_uuid]){
                 var _xhrs = xhrs_data[_uuid];
-
                 loaded += _xhrs.loaded;
                 total += _xhrs.total;
-
-                if (_xhrs.object_created)
+                if (_xhrs.object_created){
                     created_objects++;
-
-                if (_xhrs.upload_speed !== undefined && _xhrs.upload_speed !== null)
+                }
+                if (_xhrs.upload_speed !== undefined && _xhrs.upload_speed !== null){
                     upload_speed += _xhrs.upload_speed;
-
+                    upload_speed_counter++;
+                }
                 total_objects++;
             }
         }
-        upload_speed = upload_speed / total_objects;
+        upload_speed = upload_speed / upload_speed_counter;
 
         var e = document.createEvent('Event');
         e.initEvent("UploadData.update", true, true);
@@ -890,26 +881,24 @@ var ZipLoaderPool = function(){
     }
 
     function _Queue_compare(a, b) {
-        if (a.priority < b.priority){//(a is less than b by some ordering criterion)
+        if (a.priority < b.priority){ //(a less b
             return -1;
         }
-        if (a.priority > b.priority){//(a is greater than b by the ordering criterion)
+        if (a.priority > b.priority){ //(a greater b
             return 1;
         }
-        // a must be equal to b
-        return 0;
+        return 0; // a equal to b
     }
 
     function checkQueue(){
-
         if (_Queue_ative < _Queue_ative_max && _Queue.length){
-
             _Queue.sort(_Queue_compare);
             _Queue_ative++;
-            _Queue.pop().func();
+            var element = _Queue.pop();
+            element.func(element.data);
         }
         else{
-            var _empty_vlock_for_check = 0;
+            var _empty_debug = 0;
         }
     }
 
@@ -917,11 +906,9 @@ var ZipLoaderPool = function(){
 
         var _self = this;
 
-        var filename = in_filename;
-        var path = in_path;
-        var url = in_path + "/data/" + in_filename + "/" + in_lod_param.toFixed(3) + "/data.zip";
-
         var uuid = generateUUID();
+
+        _self.onLoad = function(_self){};
 
         _self.load = function(){
 
@@ -934,10 +921,22 @@ var ZipLoaderPool = function(){
             _Queue.push({
                 priority : 0,
                 action : "load",
-                uuid : uuid,
-                filename : in_filename,
-                url : url,
-                func : function(){
+                data : {
+                    uuid : uuid,
+                    filename : in_filename,
+                    path : in_path,
+                    url : in_path + "/data/" + in_filename + "/" + in_lod_param.toFixed(3) + "/data.zip",
+                    base_object : in_parent_object
+                },
+                func : function(_in_data){
+
+                    var uuid =  _in_data.uuid;
+
+                    var filename = _in_data.filename;
+                    var path = _in_data.path;
+                    var url = _in_data.url;
+                    var base_object = _in_data.base_object;
+
                     var workerThread = new Worker(workerURL_BlobUploader);
 
                     workerThread.onmessage = function (e) {
@@ -969,9 +968,7 @@ var ZipLoaderPool = function(){
                             }
 
                             _Queue_ative--;
-
-                            _self.createZipWorker(e.data.blob);
-
+                            createZipWorkerInQueue(e.data.blob, base_object, uuid, path);
                             checkQueue();
                         }
                     }; 
@@ -981,38 +978,30 @@ var ZipLoaderPool = function(){
             checkQueue();
         };
 
-        _self.onLoad = function(_self){};
+        // internal implementaton -----------------------------------------------------------
 
-        // -----------------------------------------------------------
+        function createThreeJsObjectsInQueue( in_mtl_file, in_obj_file, in_base_object, in_uuid, in_path){
 
-        var zip_reader, zip_reader_count = 0, zip_worker_interval = 0;
-        var obj_file, mtl_file;
+            _Queue.push({
+                priority : 2,
+                action : "create",
+                data : {
+                    uuid : in_uuid,
+                    mtl_file : in_mtl_file,
+                    obj_file : in_obj_file,
+                    base_object : in_base_object,
+                    path : in_path
+                },
+                func : function(_in_data){
 
-        function readZippedMtlData(text){
-            zip_reader_count--;
-            mtl_file = text;
-            createObject();
-        }
+                    var uuid = _in_data.uuid;
+                    var base_object = _in_data.base_object;
+                    var path = _in_data.path;
 
-        function readZippedObjData(text){
-            zip_reader_count--;
-            obj_file = text;
-            createObject();
-        }
+                    var mtl_file = _in_data.mtl_file;
+                    var obj_file = _in_data.obj_file;
 
-        function createObject(){
-
-            if (zip_reader_count === 0){ // all files unzipped
-
-                if (zip_reader){
-                    zip_reader.close(function() { }); // onclose callback
-                    // zip_workers_ative--;
-                    zip_reader = null;
-                }
-
-                if (obj_file && mtl_file){
-
-                    if (!in_parent_object.shared_materials){
+                    if (!base_object.shared_materials){
 
                         var mtlLoader = new THREE.MTLLoader();
                         mtlLoader.setTexturePath( path + "/resources/");
@@ -1021,11 +1010,11 @@ var ZipLoaderPool = function(){
                         change_image_ref_to_png(materials.materialsInfo);
                         materials.preload();
 
-                        in_parent_object.shared_materials = materials;
+                        base_object.shared_materials = materials;
                     }
 
                     var objLoader = new THREE.OBJWorkerLoader();
-                    objLoader.setMaterials( in_parent_object.shared_materials );
+                    objLoader.setMaterials( base_object.shared_materials );
                     objLoader.setPath( path );
 
                     var workerThread_ParseOBJ = new Worker(workerURL_OBJCreator);
@@ -1044,17 +1033,17 @@ var ZipLoaderPool = function(){
 
                             object.lod = in_lod_param;
 
-                            in_parent_object.lod_objects[in_lod_param] = object;
+                            base_object.lod_objects[in_lod_param] = object;
 
                             object.traverseVisible(function(_this){
                                 _this.onAfterRender = function( renderer, scene, camera, geometry, material, group ){
-                                    in_parent_object.onAfterRender(in_parent_object, _this, renderer, scene, camera, geometry, material, group);
+                                    base_object.onAfterRender(base_object, _this, renderer, scene, camera, geometry, material, group);
                                 };
                             });
 
                             object.visible = false;
 
-                            in_parent_object.add(object);
+                            base_object.add(object);
 
                             _self.onLoad(_self);
 
@@ -1064,65 +1053,117 @@ var ZipLoaderPool = function(){
 
                             mtl_file = null;
                             obj_file = null;
+
+                            // Check queue
+                            _Queue_ative--;
+                            checkQueue();
                         }
                     }; 
-
                     workerThread_ParseOBJ.postMessage({ msg: 'parse_file', obj_file : obj_file});
                 }
-            }
+            });
         }
 
-        _self.createZipWorker  = function(blob){
+        function createZipWorkerInQueue( in_blob, in_base_object, in_uuid, in_path){
 
-            // zip_workers_ative++;
-
-            zip.createReader(
-                new zip.BlobReader(blob),
-
-                function(reader) {
-
-                    zip_reader = reader;
-
-                    reader.getEntries( function(entries) {
-
-                        if (entries.length) {
-
-                            for (var i = 0; i < entries.length; i++){
-
-                                var filename = entries[i].filename;
-
-                                if (/\.mtl$/.test(filename)){
-                                    zip_reader_count++;
-                                    entries[i].getData(
-                                        new zip.TextWriter(),
-                                        readZippedMtlData,
-                                        null // onprogress callback
-                                    );
-                                }
-                                else if (/\.obj$/.test(filename)){
-                                    zip_reader_count++;
-                                    entries[i].getData(
-                                        new zip.TextWriter(),
-                                        readZippedObjData,
-                                        null // onprogress callback
-                                    );
-                                }
-                            }
-
-                            if (zip_reader_count < 2){
-                                reader.close(function() { }); // onclose callback
-                                zip_reader = null;
-                                // zip_workers_ative--;
-                            }
-
-                            if (zip_reader_count > 2)
-                                console.error("zip_reader_count > 2");
-                        }
-                    });
+            _Queue.push({
+                priority : 1,
+                action : "unzip",
+                data : {
+                    uuid : in_uuid,
+                    blob : in_blob,
+                    base_object : in_base_object,
+                    path : in_path
                 },
-                function(error) {}  // onerror callback
-            );
-        };
+                func : function(_in_data){
+
+                    var uuid =  _in_data.uuid;
+                    var base_object = _in_data.base_object;
+                    var path = _in_data.path;
+                    var blob = in_blob;
+
+                    var _reader, _reader_count = 0;
+                    var _obj_file, _mtl_file;
+
+                    function _create(in_mtl_file, in_obj_file, in_base_object, in_uuid, in_path){
+                        _Queue_ative--;
+                        createThreeJsObjectsInQueue( in_mtl_file, in_obj_file, in_base_object, in_uuid, in_path );
+                        checkQueue();
+                    }
+
+                    function zipMtlCallback(text){
+                        _reader_count--;
+                        _mtl_file = text;
+                        if (_reader_count === 0 && _obj_file && _mtl_file){
+
+                            if (_reader){
+                                _reader.close(function() { });
+                                _reader = null;
+                            }
+                            _create(_mtl_file, _obj_file, base_object);
+                        }
+                    }
+
+                    function zipObjCallback(text){
+                        _reader_count--;
+                        _obj_file = text;
+                        if (_reader_count === 0 && _obj_file && _mtl_file){
+
+                            if (_reader){
+                                _reader.close(function() { });
+                                _reader = null;
+                            }
+                            _create(_mtl_file ,_obj_file, base_object, uuid, path);
+                        }
+                    }
+
+                    zip.createReader(
+
+                        new zip.BlobReader(blob),
+
+                        function(reader) {
+
+                            _reader = reader;
+
+                            reader.getEntries( function(entries) {
+
+                                if (entries.length) {
+
+                                    for (var i = 0; i < entries.length; i++){
+
+                                        var filename = entries[i].filename;
+
+                                        if (/\.mtl$/.test(filename)){
+                                            _reader_count++;
+                                            entries[i].getData(
+                                                new zip.TextWriter(),
+                                                zipMtlCallback,
+                                                null // onprogress callback
+                                            );
+                                        }
+                                        else if (/\.obj$/.test(filename)){
+                                            _reader_count++;
+                                            entries[i].getData(
+                                                new zip.TextWriter(),
+                                                zipObjCallback,
+                                                null // onprogress callback
+                                            );
+                                        }
+                                    }
+
+                                    if (_reader_count != 2){
+                                        console.error("zip_reader_count != 2");
+                                        _reader.close(function() { });
+                                        _reader = null;
+                                    }
+                                }
+                            });
+                        },
+                        function(error) {}  // onerror callback
+                    );
+                }
+            });
+        }
 
         function change_image_ref_to_png(mat_info_collection){
             var bDisableBumpMapping = DEBUG.bDisableBumpMapping;
