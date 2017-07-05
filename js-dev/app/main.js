@@ -809,7 +809,7 @@ var ZipLoaderPool = function(){
 
     var _Queue = [];
     var _Queue_ative = 0;
-    var _Queue_ative_max = DEBUG.bIsMobile ? 5 : 7;
+    var _Queue_ative_max = DEBUG.bIsMobile ? 7 : 10;
 
     var xhrs_data = {};
     
