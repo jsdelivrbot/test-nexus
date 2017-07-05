@@ -1440,14 +1440,30 @@ function main(){
 
                 var object = scene_lods[i];
 
+                var visible_object = null;
+                var bSame = true;
+
                 for (var lodId in object.lod_objects){
+
+                    if (object.lod_objects[lodId].visible){
+
+                        if (visible_object)
+                            console.error('2 visible lods simultaneously!');
+
+                        visible_object = object.lod_objects[lodId];
+                    }
+
                     if (object.lod_objects[lodId]){
                         object.lod_objects[lodId].visible = false;
+
                     }
                 }
 
                 if (object.lod_objects[object.lod_desired]){
+
                     object.lod_objects[object.lod_desired].visible = true;
+
+                    bSame = visible_object === object.lod_objects[object.lod_desired];
                 }
                 else {
 
@@ -1458,13 +1474,28 @@ function main(){
                         var lod = available_lods[j];
 
                         if (object.lod_objects[lod]){
+
                             object.lod_objects[lod].visible = true;
+
+                            bSame = visible_object === object.lod_objects[object.lod_desired];
+
                             break;
                         }
                     }
                 }
 
-                object.lod_desired = available_lods[0]; // reset LOD - will be set in onAfterRender
+                // deallocate webgl memory
+                if (!bSame && visible_object){
+                    visible_object.traverse(function(_this){
+                        if (_this && _this.geometry){
+                            _this.geometry.dispose();
+                        }
+                    });
+                }
+                visible_object = null;
+
+                // reset LOD - will be set in onAfterRender
+                object.lod_desired = available_lods[0]; 
             }
 
             Nexus.beginFrame(renderer.context);
